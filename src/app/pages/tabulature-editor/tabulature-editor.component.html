@@ -1,0 +1,34 @@
+<div class="staff-container">
+  <svg #staffElement (click)="highlightSpotOnStaff($event)" [attr.width]="width()" [attr.height]="height()" >
+    <defs>
+      <mask id="staff-mask">
+        <rect [attr.width]="width()" [attr.height]="height()" fill="white"></rect>
+
+        @for (mask of staffObject(); track $index ){
+          <rect
+            [attr.x]="PADDING + (mask.positionX * SPACE_BETWEEN_ITEMS) - (FONT_SIZE / 4)"
+            [attr.y]="(SPACE_BETWEEN_LINES - STROKE_WIDTH / 2) * mask.stringNumber"
+            [attr.width]="mask.fretNumber > 9 ? FONT_SIZE + FONT_SIZE / 2 : FONT_SIZE"
+            [attr.height]="FONT_SIZE"
+            fill="black">
+          </rect>
+        }
+
+      </mask>
+    </defs>
+    @for (item of guitarTunning(); track $index ){
+      <text [attr.x]="5" [attr.y]="($index + 1) * SPACE_BETWEEN_LINES + ((FONT_SIZE / 2)  - STROKE_WIDTH)" [attr.font-size]="FONT_SIZE" [attr.fill]="'#9B9B93'">{{item}}</text>
+    }
+    <path mask="url(#staff-mask)" [attr.d]="staffLines()" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="STROKE_WIDTH" [attr.fill]="'none'" />
+
+    <rect [attr.width]="FONT_SIZE + (FONT_SIZE / 2)" [attr.height]="FONT_SIZE + (FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="highlightedGridItem().x" [attr.y]="highlightedGridItem().y" [attr.fill]="'#34F6F2'"></rect>
+
+    @for (item of tabItemsPositions(); track $index ){
+      <text [attr.x]="item.positionX" [attr.y]="item.positionY" [attr.font-size]="FONT_SIZE" [attr.fill]="'#9B9B93'">{{item.fretNumber}}</text>
+    }
+
+<!--    @for (item of tabulationGrid(); track $index ){-->
+<!--      <circle [attr.cx]="item.x" [attr.cy]="item.y" r="2" fill="red"/>-->
+<!--    }-->
+  </svg>
+</div>
