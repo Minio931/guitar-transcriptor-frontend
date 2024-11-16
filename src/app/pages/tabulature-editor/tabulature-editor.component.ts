@@ -1,5 +1,5 @@
 import {
-  afterNextRender,
+  afterNextRender, AfterViewInit, ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
@@ -7,27 +7,28 @@ import {
   signal,
   ViewChild
 } from "@angular/core";
-import {StaffItemComponent} from "./_components/staff-item/staff-item.component";
 import {TabulatureService} from "../../services/tabulature.service";
-import {TabItem} from "../../types/tab-item.type";
 import {TabObjectItem} from "../../types/tab-object-item.type";
 import {TabInterface} from "../../configs/tab-interface.config";
 import {HiglightItemPosition} from "../../types/higlight-item-position.type";
-import {TabulationGridItem} from "../../types/tabulation-grid-item.type";
 import {ArrowKey} from "../../types/arrow-key.type";
 import {ArrowKeyEnum} from "../../enums/arrow-key.enum";
 import {TimeSignature} from "../../types/time-signature.type";
+import {Bar} from "../../types/bar.type";
+import {TabulatureRowComponent} from "./_components/tabulature-row/tabulature-row.component";
+import {Row} from "../../types/row.type";
+import {ChangeDetection} from "@angular/cli/lib/config/workspace-schema";
 
 @Component({
   selector: "app-tabulature-editor",
   standalone: true,
-  templateUrl: "./tabulature-editor.component.html",
   imports: [
-    StaffItemComponent
+    TabulatureRowComponent
   ],
+  templateUrl: "./tabulature-editor.component.html",
   styleUrl: "./tabulature-editor.component.scss"
 })
-export class TabulatureEditorComponent {
+export class TabulatureEditorComponent implements AfterViewInit{
   protected readonly TabInterface = TabInterface
   readonly width = signal<string>("100%");
   readonly height = signal<string>("200px");
@@ -44,10 +45,6 @@ export class TabulatureEditorComponent {
     return this.tabulatureService.tabLines();
   }
 
-  get tabItemsPositions(): TabItem[] {
-    return this.tabulatureService.tabItemsPositions();
-  }
-
   get activeGuitarTuning(): string[] {
     return this.tabulatureService.activeGuitarTuning();
   }
@@ -56,20 +53,8 @@ export class TabulatureEditorComponent {
     return this.tabulatureService.highlightedItemPosition();
   }
 
-  get tabObject():TabObjectItem[] {
-    return this.tabulatureService.tabObject();
-  }
-
-  get spaceBetweenItems(): number {
-    return this.tabulatureService.spaceBetweenItems();
-  }
-
   get SPACE_BETWEEN_LINES(): number {
     return this.tabulatureService.SPACE_BETWEEN_LINES;
-  }
-
-  get highlightedTabulationGridItem(): TabulationGridItem | null {
-    return this.tabulatureService.highlightedTabulationGridItem();
   }
 
   get timeSignature(): TimeSignature {
@@ -84,25 +69,38 @@ export class TabulatureEditorComponent {
     return this.tabulatureService.barLines();
   }
 
-  tabulatureService: TabulatureService = inject(TabulatureService);
-
-  @ViewChild("staffElement") staffElement!: ElementRef;
-
-  constructor(elementRef: ElementRef) {
-    afterNextRender(() => {
-      window.addEventListener("resize", () => {
-        this.initializeTabulature(elementRef);
-      });
-      this.initializeTabulature(elementRef);
-    })
+  get tabRow(): string[] {
+    return this.tabulatureService.tabulationPaths();
   }
 
-  private initializeTabulature(elementRef: ElementRef) {
-    this.containerWidth = elementRef.nativeElement.offsetWidth;
-    this.tabLines = this.tabulatureService.generateTabLines();
-    this.barLines = this.tabulatureService.generateBarLines();
-    this.tabulatureService.generateTabulationGrid();
-    this.tabulatureService.generateTabItemsPositions();
+  get tabulation(): Row[] {
+    return this.tabulatureService.tabulation();
+  }
+
+  // get tabulationGrid(): TabulationGridItem[] {
+  //   return this.tabulatureService.tabulationGrid().flat(Infinity) as TabulationGridItem[];
+  // }
+
+  tabulatureService: TabulatureService = inject(TabulatureService);
+
+  @ViewChild("rowsContainer") staffElement!: ElementRef;
+
+  constructor(private changeDetectionRef: ChangeDetectorRef) {
+
+  }
+
+  ngAfterViewInit() {
+    this.initializeTabulature();
+      window.addEventListener("resize", () => {
+        this.initializeTabulature();
+      });
+  }
+
+  private initializeTabulature() {
+    this.containerWidth = this.staffElement.nativeElement.offsetWidth;
+    this.tabulatureService.initializeBars();
+    this.tabulatureService.renderBars();
+    this.changeDetectionRef.detectChanges();
   }
 
   @HostListener("window:keydown", ["$event"])
@@ -110,10 +108,9 @@ export class TabulatureEditorComponent {
     if (event.key in ArrowKeyEnum) {
       this.tabulatureService.highlightNearestItem(event.key as ArrowKey)
     }
-    if (this.highlightedTabulationGridItem) {
-      this.tabulatureService.insertTabItem(event.key, this.highlightedTabulationGridItem?.x, this.highlightedTabulationGridItem?.stringNumber);
-      this.tabulatureService.generateTabItemsPositions()
-    }
+    // if (this.highlightedTabulationGridItem) {
+      // this.tabulatureService.insertTabItem(event.key, this.highlightedTabulationGridItem?.x, this.highlightedTabulationGridItem?.stringNumber);
+    // }
   }
 
   public highlightSpotOnStaff(event: MouseEvent) {
@@ -121,7 +118,7 @@ export class TabulatureEditorComponent {
       const x: number = event.clientX - elementBoundingRect.left;
       const y: number = event.clientY - elementBoundingRect.top;
 
-      this.tabulatureService.findSpotToHighlight({x, y})
+      // this.tabulatureService.findSpotToHighlight({x, y})
   }
 
 

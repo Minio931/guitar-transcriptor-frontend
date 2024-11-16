@@ -1,0 +1,17 @@
+<div class="tabulature-row">
+  <svg #rowElement (click)="highlightSpotOnStaff($event)" [attr.width]="rowWidth()" [attr.height]="rowHeight()">
+    <defs>
+      <rect [attr.width]="rowWidth()" [attr.height]="rowHeight()" fill="white"></rect>
+    </defs>
+    <path mask="url(#staff-mask)" [attr.d]="rowPath()" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'"/>
+
+    @for (bar of rowBars(); track $index) {
+      @for (barColumn of bar.items; track $index) {
+        @for (item of barColumn; track $index) {
+          <circle r="2" [attr.cx]="item.x" [attr.cy]="item.y" fill="red" />
+        }
+      }
+    }
+    <rect [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="this.highlightPosition().x - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.y]="this.highlightPosition().y - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.fill]="'#34F6F2'"></rect>
+  </svg>
+</div>

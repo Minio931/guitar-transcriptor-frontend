@@ -6,3 +6,13 @@
   padding: 20px;
   font-family: 'Roboto Mono', monospace;
 }
+
+.tuningContainer {
+  width: 25px;
+}
+
+.linesContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}

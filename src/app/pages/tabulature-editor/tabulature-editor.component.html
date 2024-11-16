@@ -1,39 +1,53 @@
 <div class="staff-container">
-  <svg #staffElement (click)="highlightSpotOnStaff($event)" [attr.width]="width()" [attr.height]="height()" >
-    <defs>
-      <mask id="staff-mask">
-        <rect [attr.width]="width()" [attr.height]="height()" fill="white"></rect>
+<!--  <svg #staffElement (click)="highlightSpotOnStaff($event)" [attr.width]="width()" [attr.height]="height()" >-->
+<!--    <defs>-->
+<!--      <mask id="staff-mask">-->
+<!--        <rect [attr.width]="width()" [attr.height]="height()" fill="white"></rect>-->
 
-        @for (mask of tabObject; track $index ){
-          <rect
-            [attr.x]="TabInterface.PADDING + (mask.positionX * spaceBetweenItems) - (TabInterface.FONT_SIZE / 4)"
-            [attr.y]="(SPACE_BETWEEN_LINES - TabInterface.STROKE_WIDTH / 2) * mask.stringNumber"
-            [attr.width]="mask.fretNumber > 9 ? TabInterface.FONT_SIZE + TabInterface.FONT_SIZE / 1.5 : TabInterface.FONT_SIZE"
-            [attr.height]="TabInterface.FONT_SIZE"
-            fill="black">
-          </rect>
-        }
+<!--        @for (mask of tabulationGrid; track $index ){-->
+<!--          @if(!!mask.tabObject) {-->
+<!--            <rect-->
+<!--              [attr.x]="(mask?.tabObject?.fretNumber ?? 0) > 9 ? mask.x - TabInterface.FONT_SIZE / 2 : mask.x - TabInterface.FONT_SIZE / 4"-->
+<!--              [attr.y]="mask.y - TabInterface.FONT_SIZE / 4"-->
+<!--              [attr.width]="(mask?.tabObject?.fretNumber ?? 0) > 9 ? TabInterface.FONT_SIZE + TabInterface.FONT_SIZE / 1.5 : TabInterface.FONT_SIZE"-->
+<!--              [attr.height]="TabInterface.FONT_SIZE"-->
+<!--              fill="black">-->
+<!--            </rect>-->
+<!--          }-->
+<!--        }-->
+<!--      </mask>-->
+<!--    </defs>-->
+<!--    @for (item of activeGuitarTuning; track $index ){-->
+<!--      <text [attr.x]="5" [attr.y]="($index + 1) * SPACE_BETWEEN_LINES + ((TabInterface.FONT_SIZE / 2)  - TabInterface.STROKE_WIDTH)" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'#9B9B93'">{{item}}</text>-->
+<!--    }-->
 
-      </mask>
-    </defs>
+
+<!--    <path mask="url(#staff-mask)" [attr.d]="tabRow[0]" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'" />-->
+<!--    <path [attr.d]="barLines" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'" />-->
+
+<!--    <text [attr.x]="TabInterface.PADDING + TabInterface.FONT_SIZE" [attr.y]="SPACE_BETWEEN_LINES * 3.5" font-size="5rem" >-->
+<!--      {{timeSignature.numerator}}-->
+<!--    </text>-->
+<!--    <text [attr.x]="TabInterface.PADDING + TabInterface.FONT_SIZE" [attr.y]="SPACE_BETWEEN_LINES * 6" font-size="5rem" >-->
+<!--      {{timeSignature.denominator}}-->
+<!--    </text>-->
+<!--    <rect [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="highlightedItemPosition.x" [attr.y]="highlightedItemPosition.y" [attr.fill]="'#34F6F2'"></rect>-->
+
+<!--    @for (item of tabulationGrid; track $index ){-->
+<!--      @if (!!item?.tabObject) {-->
+<!--        <text [attr.x]="(item?.tabObject?.fretNumber ?? 0) > 9 ? item.x - (TabInterface.FONT_SIZE / 4) : item.x" [attr.y]="item.y + ((TabInterface.FONT_SIZE / 2) - TabInterface.STROKE_WIDTH)" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'#9B9B93'">{{item?.tabObject?.fretNumber}}</text>-->
+<!--      }-->
+<!--    }-->
+
+<!--  </svg>-->
+  <svg class="tuningContainer">
     @for (item of activeGuitarTuning; track $index ){
       <text [attr.x]="5" [attr.y]="($index + 1) * SPACE_BETWEEN_LINES + ((TabInterface.FONT_SIZE / 2)  - TabInterface.STROKE_WIDTH)" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'#9B9B93'">{{item}}</text>
     }
-
-    <path mask="url(#staff-mask)" [attr.d]="tabLines" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'" />
-    <path [attr.d]="barLines" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'" />
-
-    <text [attr.x]="TabInterface.PADDING + TabInterface.FONT_SIZE" [attr.y]="SPACE_BETWEEN_LINES * 3.5" font-size="5rem" >
-      {{timeSignature.numerator}}
-    </text>
-    <text [attr.x]="TabInterface.PADDING + TabInterface.FONT_SIZE" [attr.y]="SPACE_BETWEEN_LINES * 6" font-size="5rem" >
-      {{timeSignature.denominator}}
-    </text>
-    <rect [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="highlightedItemPosition.x" [attr.y]="highlightedItemPosition.y" [attr.fill]="'#34F6F2'"></rect>
-
-    @for (item of tabItemsPositions; track $index ){
-      <text [attr.x]="item.x" [attr.y]="item.y" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'#9B9B93'">{{item.fretNumber}}</text>
-    }
-
   </svg>
+  <div #rowsContainer class="linesContainer">
+    @for (row of tabulation; track $index) {
+      <app-tabulature-row [rowWidth]="width()" [rowHeight]="height()" [rowBars]="row.bars" [rowPath]="row.path" [rowNumber]="row.id" />
+    }
+  </div>
 </div>
