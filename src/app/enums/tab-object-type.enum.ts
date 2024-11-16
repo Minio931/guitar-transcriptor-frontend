@@ -1,4 +1,5 @@
 export enum TabObjectType {
-  FretNumber = 'fret-number',
+  Note = 'fret-number',
   Pause = 'pause',
+  TimeSignature = 'time-signature',
 }
