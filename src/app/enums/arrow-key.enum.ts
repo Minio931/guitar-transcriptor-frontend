@@ -3,4 +3,5 @@ export enum ArrowKeyEnum {
   ArrowDown = 'ArrowDown',
   ArrowLeft = 'ArrowLeft',
   ArrowRight = 'ArrowRight',
+  Delete = 'Delete'
 }

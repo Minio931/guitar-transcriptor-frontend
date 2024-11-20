@@ -3,6 +3,7 @@ import {Bar} from "../../../../types/bar.type";
 import {TabInterface} from "../../../../configs/tab-interface.config";
 import {TabulatureService} from "../../../../services/tabulature.service";
 import {HighlightPosition} from "../../../../types/highlight-position.type";
+import {BarItem} from "../../../../types/bar-item.type";
 
 const INITIAL_HIGHLIGHT_POSITION: HighlightPosition = {
   x: -100,
@@ -32,13 +33,20 @@ export class TabulatureRowComponent {
 
   rowNumber = input.required<number>();
 
+  barItems = computed<BarItem[]>(() => {
+    return this.rowBars().flatMap((bar: Bar) => {
+      return bar.items.flat(Infinity) as BarItem[]
+    })
+  })
+
+  tabulationRowId = computed(() => `staff-lines-${this.rowNumber()}`)
 
   tabulatureService: TabulatureService = inject(TabulatureService);
 
   @ViewChild('rowElement') rowElement!: ElementRef;
 
   get highlight(): HighlightPosition | null {
-    return this.tabulatureService.highlight();
+    return this.tabulatureService.highlight$;
   }
 
   highlightPosition = computed<HighlightPosition>(() => {
@@ -51,6 +59,19 @@ export class TabulatureRowComponent {
     const y: number = event.clientY - elementBoundingRect.top;
 
     this.tabulatureService.findSpotToHighlight({x, y}, this.rowNumber())
+  }
+
+  public adjustHighlightRectangle(): number {
+    const { barNumber, stringNumber, columnNumber}  = this.highlightPosition();
+
+    const barItem = this.rowBars()[barNumber]?.items[columnNumber][stringNumber - 1];
+
+    if (!!barItem?.tabObject?.fretNumber && barItem?.tabObject?.fretNumber > 9) {
+      return TabInterface.FONT_SIZE / 2.5
+    } else {
+      return  TabInterface.FONT_SIZE / 2
+    }
+
   }
 }
 
