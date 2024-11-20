@@ -11,10 +11,12 @@ import {TabulationRender} from "../types/tabulation-render.type";
 import {Bar} from "../types/bar.type";
 import {Row} from "../types/row.type";
 import {MousePosition} from "../types/mouse-position.type";
-import {Note} from "../types/note.type";
 import {ArrowKey} from "../types/arrow-key.type";
 import {ArrowKeyEnum} from "../enums/arrow-key.enum";
 import {ExtendedBarItem} from "../types/extended-bar-item.type";
+import {NoteEnum} from "../enums/note.enum";
+import {HighlightService} from "./highlight.service";
+import {TabRenderService} from "./tab-render.service";
 
 const INITIAL_HIGHLIGHT_POSITION: HiglightItemPosition = {x: -100, y: 0};
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
@@ -66,6 +68,8 @@ export class TabulatureService {
 
   highlight = signal<HighlightPosition | null>(null);
 
+  defaultNoteType = signal<NoteEnum>(NoteEnum.QUARTER_NOTE)
+
   currentBarNumber = signal<number>(0);
 
   tabulationRender = signal<TabulationRender>({
@@ -94,243 +98,13 @@ export class TabulatureService {
     };
   })
 
-  private generateTabLine(x: number, y: number, h: number): string {
-    return `M ${x} ${y} H ${h}`;
-  }
+  constructor(
+    private highlightService: HighlightService,
+    private tabRenderService: TabRenderService,
+  ) { }
 
-  private generateBarLine(x: number, y: number, v: number): string {
-    return `M ${x} ${y} V ${v}`;
-  }
-
-  private isItemNearMouse(itemX: number, itemY: number, mouseX: number, mouseY: number): boolean {
-    const buffer: number = 10;
-    return itemX < (mouseX + this.spaceBetweenItems() + buffer)
-      && itemX > (mouseX - this.spaceBetweenItems() - buffer)
-      && itemY < (mouseY + this.SPACE_BETWEEN_LINES + buffer)
-      && itemY > (mouseY - this.SPACE_BETWEEN_LINES - buffer);
-  }
-
-  private setHighlightPosition(highlightItem: HighlightPosition) {
-    this.highlight.set(highlightItem);
-  }
-
-  private isItemValidToInsert(fretNumber: string): boolean {
-    return Regex.isNumber.test(fretNumber) && (this.highlightedItemPosition()?.x ?? INITIAL_HIGHLIGHT_POSITION.x) !== INITIAL_HIGHLIGHT_POSITION.x;
-  }
-
-  private arrowUpCheck(itemX: number, itemY: number, x: number, y: number): boolean {
-    return itemX === x && itemY < y;
-  }
-
-  private arrowDownCheck(itemX: number, itemY: number, x: number, y: number): boolean {
-    return itemX === x && itemY > y;
-  }
-
-  private arrowLeftCheck(itemX: number, itemY: number, x: number, y: number): boolean {
-    return itemX < x && itemY === y;
-  }
-
-  private arrowRightCheck(itemX: number, itemY: number, x: number, y: number): boolean {
-    return itemX > x && itemY === y;
-  }
-
-  private sortingByOneAxis(a:number, b:number, axisDistance:number): number {
-    return Math.abs(a - axisDistance) - Math.abs(b - axisDistance);
-  }
-
-  private isValidTwoDigitFretNumber(fretNumber: number): boolean {
-    return fretNumber < 25 && fretNumber > 9;
-  }
-
-  // private checkIfAddNextBar() {
-  //   const barLinesPositionLength = this.barLinesPositions().length;
-  //   const barLastItemPosition: number = this.barLinesPositions()[barLinesPositionLength - 1].x
-  //    if (this.highlightedTabulationGridItem()!.x > barLastItemPosition) {
-  //      this.numberOfBars.set(this.numberOfBars() + 1);
-  //      this.barLines.set(this.generateBarLines());
-  //    }
-  // }
-  private moveHighlight(direction: ArrowKey, currentRow: Row, columnNumber: number, stringNumber: number, rowNumber: number, barNumber: number): HighlightPosition | null {
-      let column: number= columnNumber;
-      let string: number = stringNumber;
-      let bar: Bar | null = currentRow.bars[barNumber] ?? null;
-      let barIndex: number = barNumber;
-      let row: Row | null = currentRow;
-      let rowIndex: number = rowNumber;
-
-      if (direction === ArrowKeyEnum.ArrowLeft || direction === ArrowKeyEnum.ArrowRight) {
-        let summand: number = direction === ArrowKeyEnum.ArrowLeft ? -1 : 1;
-        column += summand;
-
-        if (column > 3 || column < 0) {
-          bar = currentRow.bars[barIndex + summand] ??
-            (this.tabulation()[rowNumber + summand]?.
-              bars[direction === ArrowKeyEnum.ArrowLeft ? this.tabulation()[rowNumber + summand]?.bars.length - 1 : 0]
-              ?? null);
-          barIndex = currentRow.bars[barIndex + summand]
-            ? barNumber + summand
-            : (direction === ArrowKeyEnum.ArrowLeft ? (this.tabulation()[rowNumber + summand]?.bars.length - 1 ?? null) : 0);
-          rowIndex = currentRow.bars[barNumber + summand] ? rowNumber : rowNumber + summand;
-          column = direction === ArrowKeyEnum.ArrowLeft ? bar?.items?.length - 1 : 0;
-        }
-      }
-
-      if (direction === ArrowKeyEnum.ArrowUp || direction === ArrowKeyEnum.ArrowDown) {
-        let summand: number = direction === ArrowKeyEnum.ArrowUp ? -1 : 1;
-        string = stringNumber + summand;
-        if (string > 6 || string < 1) {
-          string = direction === ArrowKeyEnum.ArrowUp ? 6 : 1;
-          row = this.tabulation()[rowNumber + summand] ?? null;
-          rowIndex = rowNumber + summand;
-        }
-
-        bar = row?.bars[barNumber] ?? null;
-
-        if (bar === null) {
-          bar = row?.bars[barNumber - 1];
-          barIndex = row?.bars?.length - 1;
-          column = row?.bars[barIndex]?.items?.length - 1;
-        }
-      }
-      if (row === null || bar === null) {
-        return null;
-      }
-
-      if (bar.items[column] === undefined || bar.items[column][string - 1] === undefined) {
-        return null;
-      }
-      const barItem: BarItem = bar.items[column][string - 1];
-
-      return {
-        x: barItem.x,
-        y: barItem.y,
-        rowNumber: rowIndex,
-        columnNumber: column,
-        stringNumber: string,
-        barNumber: barIndex
-      }
-  }
-
-  private moveHighlightRectangle(direction: ArrowKey) {
-    const {x, y, rowNumber, columnNumber, stringNumber, barNumber} = this.highlight()!;
-
-    const currentRow: Row | null = this.tabulation().find((row: Row) => row.id === rowNumber) ?? null;
-
-    if (!currentRow) {
-      return;
-    }
-
-    let newHighlightPosition: HighlightPosition | null = null;
-    switch (direction) {
-      case ArrowKeyEnum.ArrowUp:
-        newHighlightPosition = this.moveHighlight(ArrowKeyEnum.ArrowUp, currentRow, columnNumber, stringNumber, rowNumber, barNumber);
-        this.highlight.set(newHighlightPosition ? newHighlightPosition : this.highlight());
-        break;
-      case ArrowKeyEnum.ArrowDown:
-        newHighlightPosition = this.moveHighlight(ArrowKeyEnum.ArrowDown, currentRow, columnNumber, stringNumber, rowNumber, barNumber);
-        this.highlight.set(newHighlightPosition ?? this.highlight());
-        break;
-      case ArrowKeyEnum.ArrowRight:
-        newHighlightPosition = this.moveHighlight(ArrowKeyEnum.ArrowRight, currentRow, columnNumber, stringNumber, rowNumber, barNumber)
-        this.highlight.set(newHighlightPosition ?? this.highlight())
-        break;
-      case ArrowKeyEnum.ArrowLeft:
-        newHighlightPosition = this.moveHighlight(ArrowKeyEnum.ArrowLeft, currentRow, columnNumber, stringNumber, rowNumber, barNumber)
-        this.highlight.set(newHighlightPosition ?? this.highlight())
-        break;
-    }
-  }
-
-  public generateBar(x: number, y: number, v: number, h: number) {
-    let barString: string = "";
-    for (let i = 0; i < this.NUMBER_OF_LINES; i++){
-      barString += this.generateTabLine(x, y + (i* this.SPACE_BETWEEN_LINES), x + h);
-    }
-    barString += this.generateBarLine(x + h, y, v);
-
-    return barString;
-  }
-
-  private initializeFirstItem(): BarItem {
-    return {
-      x: TabInterface.PADDING,
-      y: this.SPACE_BETWEEN_LINES,
-      xIndex: 0,
-      tabObject: {
-        positionX: 0,
-        barNumber: 0,
-        type: TabObjectType.TimeSignature,
-      }
-    }
-  }
-
-  private calculatePositionX(type: string, timeSignature: TimeSignature, barNumber: number, columnIndex: number): number {
-    let noteLength: number = 0;
-    let fitInBar: number = 0;
-    const barValue = timeSignature.numerator / timeSignature.denominator;
-
-    switch (type) {
-      case "1":
-        noteLength = TabInterface.durationOneLength;
-        fitInBar = Math.floor(barValue);
-        break;
-      case "2":
-        noteLength = TabInterface.durationOneLength;
-        fitInBar = Math.floor(barValue / 0.5);
-        break;
-      case "4":
-        noteLength = TabInterface.durationFourLength;
-        fitInBar = Math.floor(barValue / 0.25);
-        break;
-      case "8":
-        noteLength = TabInterface.durationEightLength;
-        fitInBar = Math.floor(barValue / 0.125);
-        break;
-      case "16":
-        noteLength = TabInterface.durationSixteenLength;
-        fitInBar = Math.floor(barValue / 0.0625);
-        break;
-      case "32":
-        noteLength = TabInterface.durationThirtyTwoLength;
-        fitInBar = Math.floor(barValue / 0.03125);
-        break;
-      default:
-        noteLength = TabInterface.durationFourLength;
-        fitInBar = Math.floor(barValue / 0.25);
-    }
-
-    return TabInterface.PADDING + (barNumber * (fitInBar * noteLength) + (columnIndex * noteLength));
-  }
-
-  private recalculateBarItemsPositions(tabulation: Row[]) {
-    tabulation.forEach((row: Row) => {
-      row.bars.forEach((bar: Bar, barIndex) => {
-        bar.items.map((column: BarItem[], columnIndex: number) => {
-            return column.map((item: BarItem) => {
-              item.x = this.calculatePositionX(item?.note?.type ?? "4", bar.timeSignature, barIndex, columnIndex);
-            })
-        })
-      })
-    })
-
-    return tabulation;
-  }
-
-  private initializeBarItems(barNumber: number): BarItem[][] {
-    let barItems: BarItem[][] = [];
-    for (let i = 0; i < 4; i++) {
-      barItems[i] = []
-      for (let j = 0; j < this.NUMBER_OF_LINES; j++) {
-          barItems[i][j] = {
-            x: TabInterface.PADDING + (barNumber * (4 * TabInterface.durationFourLength) + (i * TabInterface.durationFourLength)),
-            y: this.SPACE_BETWEEN_LINES + (this.SPACE_BETWEEN_LINES * j),
-            stringNumber: j + 1,
-            xIndex: i,
-          }
-      }
-    }
-
-    return barItems;
+  public get highlight$(): HighlightPosition | null {
+    return this.highlightService.highlight;
   }
 
   public initializeBars() {
@@ -366,55 +140,164 @@ export class TabulatureService {
     this.tabulation.set(tabulation);
   }
 
-  private getLengthOfNote(denominator: number): number {
-    return denominator === 1 ? TabInterface.durationOneLength :
-      denominator === 2 ? TabInterface.durationTwoLength :
-      denominator === 4 ? TabInterface.durationFourLength :
-      denominator === 8 ? TabInterface.durationEightLength :
-      denominator === 16 ? TabInterface.durationSixteenLength : TabInterface.durationThirtyTwoLength;
+  public renderBars() {
+    let tabulation: Row[]  = this.adjustingRows(this.tabulation())
+    this.tabulation.set(tabulation);
   }
 
-  private getBarColumnWidth (barItem: BarItem, denominator: number): number {
-    switch (barItem.tabObject?.type) {
-      case TabObjectType.TimeSignature:
-        return TabInterface.timeSignatureLength;
+  public findSpotToHighlight(mousePosition: MousePosition, rowNumber: number) {
+    const row = this.tabulation()[rowNumber];
+    const highlight = this.highlightService.findNearestHighlight(mousePosition, row, this.spaceBetweenItems(), this.SPACE_BETWEEN_LINES)
+    if (highlight) {
+      this.highlightService.setHighlightPosition(highlight);
+    }
+  }
+
+  public highlightNearestItem(direction: ArrowKey) {
+    if (!!this.highlight$) {
+      this.fretNumber = ''
+      const highlight = this.highlightService.moveHighlight(direction, this.tabulation(), this.highlight$);
+      if (highlight) {
+        this.highlightService.setHighlightPosition(highlight);
+      }
+    }
+  }
+
+  public insertTabElement(tabObjectType: TabObjectType, fretNumber?: string) {
+    switch (tabObjectType) {
       case TabObjectType.Note:
-        return barItem!.note!.width;
-      default:
-        return this.getLengthOfNote(denominator);
+        if (!!fretNumber && this.isItemValidToInsert(fretNumber ?? '') ) {
+          this.insertFretNumber(fretNumber);
+        }
+        break;
     }
   }
 
-  private calculateLengthOfBar(bar: Bar): number {
-    let barWidth = 0;
-      bar.items.forEach(barItem => {
-        let widthToAdd = 0;
-        barItem.forEach(item => {
-          widthToAdd = this.getBarColumnWidth(item, bar.timeSignature.denominator)
-        })
-        barWidth += widthToAdd;
-      })
-    return barWidth;
+  public removeTabElement() {
+    if (this.highlight() === null) {
+      return;
+    }
+    const {rowNumber, columnNumber, barNumber, stringNumber} = this.highlight()!
+    const tabulation = this.tabulation();
+    delete tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1].tabObject;
+    this.tabulation.set(tabulation);
   }
 
-  private renderRowPath(bars: Bar[]){
-    let tabulationPath: string[] = [];
-    let rowWidth = 0;
-    bars.forEach((bar: Bar, index) => {
-          const barWidth = this.calculateLengthOfBar(bar);
-          rowWidth += barWidth;
-          const x: number = index * barWidth;
-          const y: number = this.SPACE_BETWEEN_LINES;
-          const v: number = this.NUMBER_OF_LINES * this.SPACE_BETWEEN_LINES;
-          tabulationPath.push(this.generateBar(x, y, v, barWidth));
-    })
+  private createNewBar(previousIndex: number, row: Row): void {
+    const previousBar: Bar = row.bars[previousIndex];
+    const newBarElement: Bar = {
+      ...previousBar,
+      id: previousBar.id++,
+      items: this.initializeBarItems(0),
+      repeatStarts: false,
+      repeatEnds: false,
+    }
 
+    const tabulation = this.tabulation();
+    tabulation[tabulation.length - 1].bars.push(newBarElement);
+
+    this.tabulation.set(tabulation);
+  }
+
+  private isItemValidToInsert(fretNumber: string): boolean {
+    return Regex.isNumber.test(fretNumber) && !!this.highlight();
+  }
+
+  private getNoteWidth(note: NoteEnum): number {
+    switch (note) {
+      case NoteEnum.WHOLE_NOTE:
+        return TabInterface.durationOneLength;
+      case NoteEnum.HALF_NOTE:
+        return TabInterface.durationTwoLength;
+      case NoteEnum.QUARTER_NOTE:
+        return TabInterface.durationFourLength
+      case NoteEnum.EIGHTH_NOTE:
+        return TabInterface.durationEightLength
+      case NoteEnum.SIXTEENTH_NOTE:
+        return TabInterface.durationSixteenLength
+      case NoteEnum.THIRTY_SECOND_NOTE:
+        return TabInterface.durationThirtyTwoLength
+    }
+  }
+
+  private defineObjectNote(bar: Bar, barItem: BarItem, columnNumber: number) {
+    if(!!barItem.note?.type){
+      return barItem;
+    }
+
+    const allBarItems = bar.items.flat(Infinity) as BarItem[];
+    const noteType =  allBarItems.find(item => !!item.note && (item?.xIndex ?? - 1) < columnNumber)?.note?.type ?? this.defaultNoteType()
+
+    barItem.note = {
+      type: noteType,
+      width: this.getNoteWidth(noteType)
+    }
+
+    return barItem
+  }
+
+  private insertFretNumber(fretNumber: string) {
+      const tabulation = this.tabulation();
+      if (!!this.highlight()) {
+        const {rowNumber, columnNumber, stringNumber, barNumber} = this.highlight()!;
+
+        const bar = tabulation[rowNumber].bars[barNumber];
+        const barItem: BarItem = tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1];
+
+        this.fretNumber += fretNumber;
+
+        setTimeout(() => {
+          this.fretNumber = ""
+        }, 1500)
+
+        if (Number(this.fretNumber) > 25) {
+          this.fretNumber = fretNumber;
+        }
+
+
+
+        barItem.tabObject = {
+          barNumber,
+          fretNumber: Number(this.fretNumber),
+          positionX: columnNumber,
+          stringNumber: stringNumber,
+          type: TabObjectType.Note
+        }
+
+        barItem.note = this.defineObjectNote(bar, barItem, columnNumber).note;
+        this.tabulation.set(tabulation);
+      }
+  }
+
+  private initializeFirstItem(): BarItem {
     return {
-      rowWidth,
-      tabulationPath: tabulationPath.join(" ")
+      x: TabInterface.PADDING,
+      y: this.SPACE_BETWEEN_LINES,
+      xIndex: 0,
+      tabObject: {
+        positionX: 0,
+        barNumber: 0,
+        type: TabObjectType.TimeSignature,
+      }
     }
   }
 
+  private initializeBarItems(barNumber: number): BarItem[][] {
+    let barItems: BarItem[][] = [];
+    for (let i = 0; i < 4; i++) {
+      barItems[i] = []
+      for (let j = 0; j < this.NUMBER_OF_LINES; j++) {
+          barItems[i][j] = {
+            x: TabInterface.PADDING + (barNumber * (4 * TabInterface.durationFourLength) + (i * TabInterface.durationFourLength)),
+            y: this.SPACE_BETWEEN_LINES + (this.SPACE_BETWEEN_LINES * j),
+            stringNumber: j + 1,
+            xIndex: i,
+          }
+      }
+    }
+
+    return barItems;
+  }
 
   private adjustingRows(tabulation: Row[]): Row[] {
     let allBars: Bar[] = [];
@@ -429,7 +312,7 @@ export class TabulatureService {
     let rowId: number = 0;
 
     allBars.forEach((bar: Bar) => {
-      const barWidth = this.calculateLengthOfBar(bar);
+      const barWidth = this.tabRenderService.calculateLengthOfBar(bar);
 
       if (currentRowWidth + barWidth > this.containerWidth()) {
           newTabulation.push({
@@ -454,77 +337,13 @@ export class TabulatureService {
     }
 
     newTabulation.forEach(row => {
-      const { tabulationPath } = this.renderRowPath(row.bars);
+      const { tabulationPath } = this.tabRenderService.renderRowPath(row.bars);
       row.path = tabulationPath;
     });
 
 
-    return this.recalculateBarItemsPositions(newTabulation);;
+    return this.tabRenderService.recalculateBarItemsPositions(newTabulation);
   }
 
-  public renderBars() {
-    let tabulation: Row[]  = this.adjustingRows(this.tabulation())
-    this.tabulation.set(tabulation);
-  }
-
-  public findSpotToHighlight(mousePosition: MousePosition, rowNumber: number) {
-      const {x, y} = mousePosition;
-      let highlightPosition: HighlightPosition | null = null;
-      const nearPositions: ExtendedBarItem[] = []
-
-      const row: Row | null = this.tabulation().find((row: Row) => row.id === rowNumber) ?? null;
-
-      row?.bars.forEach((bar: Bar, barIndex: number) => {
-        bar.items.forEach((barItem: BarItem[]) => {
-          barItem.forEach((item: BarItem) => {
-            if (this.isItemNearMouse(item.x, item.y, x, y)) {
-              nearPositions.push({...item, barNumber: barIndex});
-            }
-          })
-        })
-      })
-
-
-      if (nearPositions.length === 0) {
-        return;
-      }
-
-    nearPositions.sort((a: BarItem, b: BarItem) => {
-      return (Math.pow((x - a.x), 2) + Math.pow((a.y - y), 2)) - (Math.pow((x - b.x), 2) + Math.pow((b.y - y), 2));
-    })
-
-    highlightPosition = {
-        x: nearPositions[0].x,
-        y: nearPositions[0].y,
-        rowNumber,
-        stringNumber: nearPositions[0]?.stringNumber ?? 0,
-        columnNumber: nearPositions[0]?.xIndex ?? 0,
-        barNumber: nearPositions[0]?.barNumber ?? 0,
-    }
-
-
-      this.setHighlightPosition(highlightPosition);
-  }
-
-
-  public highlightNearestItem(direction: ArrowKey) {
-    switch (direction) {
-      case ArrowKeyEnum.ArrowUp:
-          this.moveHighlightRectangle(ArrowKeyEnum.ArrowUp)
-        break;
-      case ArrowKeyEnum.ArrowRight:
-          this.moveHighlightRectangle(ArrowKeyEnum.ArrowRight)
-        break;
-      case ArrowKeyEnum.ArrowDown:
-          this.moveHighlightRectangle(ArrowKeyEnum.ArrowDown)
-        break;
-      case ArrowKeyEnum.ArrowLeft:
-          this.moveHighlightRectangle(ArrowKeyEnum.ArrowLeft)
-        break;
-      default:
-
-        break;
-    }
-  }
 
 }

@@ -1,5 +1,6 @@
 import {
-  afterNextRender, AfterViewInit, ChangeDetectorRef,
+  AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
@@ -8,16 +9,14 @@ import {
   ViewChild
 } from "@angular/core";
 import {TabulatureService} from "../../services/tabulature.service";
-import {TabObjectItem} from "../../types/tab-object-item.type";
 import {TabInterface} from "../../configs/tab-interface.config";
 import {HiglightItemPosition} from "../../types/higlight-item-position.type";
 import {ArrowKey} from "../../types/arrow-key.type";
 import {ArrowKeyEnum} from "../../enums/arrow-key.enum";
 import {TimeSignature} from "../../types/time-signature.type";
-import {Bar} from "../../types/bar.type";
 import {TabulatureRowComponent} from "./_components/tabulature-row/tabulature-row.component";
 import {Row} from "../../types/row.type";
-import {ChangeDetection} from "@angular/cli/lib/config/workspace-schema";
+import {TabObjectType} from "../../enums/tab-object-type.enum";
 
 @Component({
   selector: "app-tabulature-editor",
@@ -108,18 +107,10 @@ export class TabulatureEditorComponent implements AfterViewInit{
     if (event.key in ArrowKeyEnum) {
       this.tabulatureService.highlightNearestItem(event.key as ArrowKey)
     }
-    // if (this.highlightedTabulationGridItem) {
-      // this.tabulatureService.insertTabItem(event.key, this.highlightedTabulationGridItem?.x, this.highlightedTabulationGridItem?.stringNumber);
-    // }
+    if (event.key === ArrowKeyEnum.Delete) {
+      this.tabulatureService.removeTabElement();
+    }
+    this.tabulatureService.insertTabElement(TabObjectType.Note, event.key);
   }
-
-  public highlightSpotOnStaff(event: MouseEvent) {
-      const elementBoundingRect: DOMRect = this.staffElement.nativeElement.getBoundingClientRect();
-      const x: number = event.clientX - elementBoundingRect.left;
-      const y: number = event.clientY - elementBoundingRect.top;
-
-      // this.tabulatureService.findSpotToHighlight({x, y})
-  }
-
 
 }
