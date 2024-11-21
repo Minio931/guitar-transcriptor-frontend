@@ -1,0 +1,5 @@
+<p-context-menu styleClass="custom-context-menu" [target]="menuTarget()" [model]="menuItems" (onShow)="loadIcons()">
+  <ng-template #item let-item>
+      <ng-container #iconContainer></ng-container>
+  </ng-template>
+</p-context-menu>

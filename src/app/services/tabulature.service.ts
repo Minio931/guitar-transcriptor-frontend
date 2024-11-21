@@ -1,5 +1,4 @@
 import {computed, Injectable, signal} from "@angular/core";
-import {HiglightItemPosition} from "../types/higlight-item-position.type";
 import {HighlightPosition} from "../types/highlight-position.type";
 import {BarItem} from "../types/bar-item.type";
 import {TabInterface} from "../configs/tab-interface.config";
@@ -12,13 +11,10 @@ import {Bar} from "../types/bar.type";
 import {Row} from "../types/row.type";
 import {MousePosition} from "../types/mouse-position.type";
 import {ArrowKey} from "../types/arrow-key.type";
-import {ArrowKeyEnum} from "../enums/arrow-key.enum";
-import {ExtendedBarItem} from "../types/extended-bar-item.type";
 import {NoteEnum} from "../enums/note.enum";
 import {HighlightService} from "./highlight.service";
 import {TabRenderService} from "./tab-render.service";
 
-const INITIAL_HIGHLIGHT_POSITION: HiglightItemPosition = {x: -100, y: 0};
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
 const INITIAL_TIME_SIGNATURE: TimeSignature = {
@@ -266,6 +262,7 @@ export class TabulatureService {
 
         barItem.note = this.defineObjectNote(bar, barItem, columnNumber).note;
         this.tabulation.set(tabulation);
+        console.log(this.tabulation())
       }
   }
 

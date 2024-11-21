@@ -2,3 +2,12 @@
 body {
   background: #0E1116;
 }
+
+.eighth-svg-icon {
+  color: #fff;
+  background-image: url("/assets/notes/eighth_note.svg");
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-block;
+  background-size: contain;
+}
