@@ -170,13 +170,14 @@ export class TabulatureService {
   }
 
   public removeTabElement() {
-    if (this.highlight() === null) {
+    if (!this.highlight$) {
       return;
     }
-    const {rowNumber, columnNumber, barNumber, stringNumber} = this.highlight()!
+    const {rowNumber, columnNumber, barNumber, stringNumber} = this.highlight$;
     const tabulation = this.tabulation();
     delete tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1].tabObject;
     this.tabulation.set(tabulation);
+    console.log(this.tabulation())
   }
 
   private createNewBar(previousIndex: number, row: Row): void {
@@ -196,7 +197,7 @@ export class TabulatureService {
   }
 
   private isItemValidToInsert(fretNumber: string): boolean {
-    return Regex.isNumber.test(fretNumber) && !!this.highlight();
+    return Regex.isNumber.test(fretNumber) && !!this.highlight$;
   }
 
   private getNoteWidth(note: NoteEnum): number {
@@ -234,8 +235,8 @@ export class TabulatureService {
 
   private insertFretNumber(fretNumber: string) {
       const tabulation = this.tabulation();
-      if (!!this.highlight()) {
-        const {rowNumber, columnNumber, stringNumber, barNumber} = this.highlight()!;
+      if (!!this.highlight$) {
+        const {rowNumber, columnNumber, stringNumber, barNumber} = this.highlight$;
 
         const bar = tabulation[rowNumber].bars[barNumber];
         const barItem: BarItem = tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1];
