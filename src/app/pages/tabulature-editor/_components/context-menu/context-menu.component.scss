@@ -12,6 +12,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 2rem;
+    height: 2rem;
+    .ng-star-inserted {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
   }
   .p-contextmenu-item-link{
     gap: 0;

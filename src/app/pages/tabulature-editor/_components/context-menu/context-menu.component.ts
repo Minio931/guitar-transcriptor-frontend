@@ -35,49 +35,50 @@ export class ContextMenuComponent implements  AfterViewInit{
 
 
   ngAfterViewInit() {
-    console.log(this.menuTarget(), "asdasdas")
+    this.iconContainers.changes.subscribe(iconContainers => {
+      this.loadIcons()
+    })
   }
 
   menuItems: MenuItem[] = [
     {
-      label: '',
+      label: '1/1',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/2',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/4',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/8',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/16',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/32',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
     {
-      label: '',
+      label: '1/64',
       icon: "eighth-note",
       command: () => console.log('Guitar Transcriptor'),
     },
   ]
 
   getIconComponent(iconName: string) {
-    console.log(iconName);
     switch (iconName){
       case 'eighth-note':
         return EighthNoteSvgComponent;

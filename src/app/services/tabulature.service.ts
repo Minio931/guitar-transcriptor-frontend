@@ -14,6 +14,7 @@ import {ArrowKey} from "../types/arrow-key.type";
 import {NoteEnum} from "../enums/note.enum";
 import {HighlightService} from "./highlight.service";
 import {TabRenderService} from "./tab-render.service";
+import {Option} from "../types/option.type";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
@@ -179,6 +180,15 @@ export class TabulatureService {
     this.tabulation.set(tabulation);
     console.log(this.tabulation())
   }
+
+  public assignTabElementOptions(type: TabObjectType, option: Option) {
+    switch (type) {
+      case TabObjectType.Note:
+
+        break;
+    }
+  }
+
 
   private createNewBar(previousIndex: number, row: Row): void {
     const previousBar: Bar = row.bars[previousIndex];
