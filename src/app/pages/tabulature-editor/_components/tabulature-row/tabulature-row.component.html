@@ -1,11 +1,11 @@
-<div class="tabulature-row">
-  <svg #rowElement (click)="highlightSpotOnStaff($event)" [attr.width]="rowWidth()" [attr.height]="rowHeight()">
+<div  class="tabulature-row">
+  <svg  #rowElement (click)="highlightSpotOnStaff($event)" [attr.width]="rowWidth()" [attr.height]="rowHeight()">
     <defs>
       <mask [attr.id]="tabulationRowId()">
         <rect [attr.width]="rowWidth()" [attr.height]="rowHeight()" fill="white"></rect>
 
         @for (mask of barItems(); track $index ){
-          @if(!!mask.tabObject) {
+          @if(!!mask.tabObject?.fretNumber) {
             <rect
               [attr.x]="(mask?.tabObject?.fretNumber ?? 0) > 9 ? mask.x - TabInterface.FONT_SIZE / 2 : mask.x - TabInterface.FONT_SIZE / 4"
               [attr.y]="mask.y - TabInterface.FONT_SIZE / 4"
@@ -18,7 +18,7 @@
       </mask>
     </defs>
     <path [attr.mask]="'url(#' + tabulationRowId() + ')'" [attr.d]="rowPath()" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'"/>
-    <rect [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="this.highlightPosition().x - this.adjustHighlightRectangle()" [attr.y]="this.highlightPosition().y - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.fill]="'#34F6F2'"></rect>
+    <rect #highlight  [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="this.highlightPosition().x - this.adjustHighlightRectangle()" [attr.y]="this.highlightPosition().y - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.fill]="'#34F6F2'"></rect>
 
     @for (item of barItems(); track $index) {
       @if (!!item.tabObject) {
@@ -34,4 +34,5 @@
 <!--      }-->
 <!--    }-->
   </svg>
+  <app-context-menu [menuTarget]="highlight"/>
 </div>

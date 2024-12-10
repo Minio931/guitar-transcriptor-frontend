@@ -1,0 +1,8 @@
+<p-context-menu styleClass="custom-context-menu" [target]="menuTarget()" [model]="menuItems" >
+  <ng-template #item let-item>
+      <div class="custom-icon">
+          <span [class]="item.icon" class="custom-icon" [pTooltip]="item.label" tooltipPosition="bottom">
+          </span>
+      </div>
+  </ng-template>
+</p-context-menu>

@@ -4,6 +4,8 @@ import {TabInterface} from "../../../../configs/tab-interface.config";
 import {TabulatureService} from "../../../../services/tabulature.service";
 import {HighlightPosition} from "../../../../types/highlight-position.type";
 import {BarItem} from "../../../../types/bar-item.type";
+import {ContextMenuComponent} from "../context-menu/context-menu.component";
+import {HighlightService} from "../../../../services/highlight.service";
 
 const INITIAL_HIGHLIGHT_POSITION: HighlightPosition = {
   x: -100,
@@ -18,6 +20,9 @@ const INITIAL_HIGHLIGHT_POSITION: HighlightPosition = {
   selector: "app-tabulature-row",
   templateUrl: "./tabulature-row.component.html",
   styleUrl: "./tabulature-row.component.scss",
+  imports: [
+    ContextMenuComponent
+  ],
   standalone: true
 })
 export class TabulatureRowComponent {

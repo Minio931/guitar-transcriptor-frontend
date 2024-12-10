@@ -1,46 +1,27 @@
-import {computed, Injectable, signal} from "@angular/core";
-import {HiglightItemPosition} from "../types/higlight-item-position.type";
+import {inject, Injectable, Injector, signal} from "@angular/core";
 import {HighlightPosition} from "../types/highlight-position.type";
 import {BarItem} from "../types/bar-item.type";
 import {TabInterface} from "../configs/tab-interface.config";
 import {Regex} from "../configs/regex.config";
 import {TimeSignature} from "../types/time-signature.type";
 import {TabObjectType} from "../enums/tab-object-type.enum";
-import {Position} from "../types/position.type";
 import {TabulationRender} from "../types/tabulation-render.type";
 import {Bar} from "../types/bar.type";
 import {Row} from "../types/row.type";
 import {MousePosition} from "../types/mouse-position.type";
 import {ArrowKey} from "../types/arrow-key.type";
-import {ArrowKeyEnum} from "../enums/arrow-key.enum";
-import {ExtendedBarItem} from "../types/extended-bar-item.type";
 import {NoteEnum} from "../enums/note.enum";
 import {HighlightService} from "./highlight.service";
 import {TabRenderService} from "./tab-render.service";
+import {GetNoteWidth} from "../functions/get-note-width.function";
 
-const INITIAL_HIGHLIGHT_POSITION: HiglightItemPosition = {x: -100, y: 0};
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
 const INITIAL_TIME_SIGNATURE: TimeSignature = {
   numerator: 4,
   denominator: 4
 }
-// const INITIAL_BAR: Row[] = [
-//   [
-//       {
-//       id: 1,
-//       row: 1,
-//       items: [],
-//       timeSignature: {
-//         numerator: 4,
-//         denominator: 4
-//       },
-//       tempo: 120,
-//       repeatStarts: false,
-//       repeatEnds: false,
-//     }
-//   ]
-// ];
+
 
 @Injectable({providedIn: "root"})
 export class TabulatureService {
@@ -48,60 +29,64 @@ export class TabulatureService {
 
   readonly SPACE_BETWEEN_LINES: number = 25;
 
+  injector = inject(Injector)
+  highlightService = this.injector.get(HighlightService);
+  tabRenderService = inject(TabRenderService);
+
   spaceBetweenItems = signal<number>(INITIAL_SPACE_BETWEEN_ITEMS);
 
-  timeSignature = signal<TimeSignature>(INITIAL_TIME_SIGNATURE)
-
-  barLinesPositions = signal<Position[]>([]);
-
-  tabLines = signal<string>("");
-
-  barLines = signal<string>("");
+  // timeSignature = signal<TimeSignature>(INITIAL_TIME_SIGNATURE)
+  //
+  // barLinesPositions = signal<Position[]>([]);
+  //
+  // tabLines = signal<string>("");
+  //
+  // barLines = signal<string>("");
 
   activeGuitarTuning = signal<string[]>(INITIAL_GUITAR_TUNING);
 
   tabulation = signal<Row[]>([]);
 
-  tabulationPaths = signal<string[]>([])
+  // tabulationPaths = signal<string[]>([])
 
-  highlightedTabulationGridItem = signal<BarItem | null>(null);
+  // highlightedTabulationGridItem = signal<BarItem | null>(null);
 
   highlight = signal<HighlightPosition | null>(null);
 
   defaultNoteType = signal<NoteEnum>(NoteEnum.QUARTER_NOTE)
 
-  currentBarNumber = signal<number>(0);
+  // currentBarNumber = signal<number>(0);
 
   tabulationRender = signal<TabulationRender>({
-    numberOfBars: 2,
-    numberOfTabRows: 2,
+    numberOfBars: 1,
+    numberOfTabRows: 1,
   });
 
   fretNumber: string = ""
 
   public containerWidth = signal<number>(0);
 
-  tabulationLinesWidth = computed<number>(() => {
-    return (this.containerWidth() );
-  });
+  // tabulationLinesWidth = computed<number>(() => {
+  //   return (this.containerWidth() );
+  // });
+  //
+  // barWidth = computed<number>(() => {
+  //   return (this.spaceBetweenItems() * this.timeSignature().numerator) + this.spaceBetweenItems() / 2;
+  // })
+  //
+  //
+  // highlightedItemPosition = computed<Position>( () => {
+  //   const shiftToCenter: number = (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2;
+  //   return {
+  //     x: (this.highlightedTabulationGridItem()?.x ?? - 100 )- shiftToCenter + ( (this.highlightedTabulationGridItem()?.tabObject?.fretNumber ?? 0) > 9 ? TabInterface.FONT_SIZE / 3 : TabInterface.FONT_SIZE / 4),
+  //     y: (this.highlightedTabulationGridItem()?.y ?? 0)- shiftToCenter
+  //   };
+  // })
 
-  barWidth = computed<number>(() => {
-    return (this.spaceBetweenItems() * this.timeSignature().numerator) + this.spaceBetweenItems() / 2;
-  })
-
-
-  highlightedItemPosition = computed<Position>( () => {
-    const shiftToCenter: number = (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2;
-    return {
-      x: (this.highlightedTabulationGridItem()?.x ?? - 100 )- shiftToCenter + ( (this.highlightedTabulationGridItem()?.tabObject?.fretNumber ?? 0) > 9 ? TabInterface.FONT_SIZE / 3 : TabInterface.FONT_SIZE / 4),
-      y: (this.highlightedTabulationGridItem()?.y ?? 0)- shiftToCenter
-    };
-  })
-
-  constructor(
-    private highlightService: HighlightService,
-    private tabRenderService: TabRenderService,
-  ) { }
+  public updateTabulation(tabulation: Row[]) {
+    this.tabulation.set(tabulation);
+    this.renderBars();
+  }
 
   public get highlight$(): HighlightPosition | null {
     return this.highlightService.highlight;
@@ -181,10 +166,10 @@ export class TabulatureService {
     const tabulation = this.tabulation();
     delete tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1].tabObject;
     this.tabulation.set(tabulation);
-    console.log(this.tabulation())
   }
 
-  private createNewBar(previousIndex: number, row: Row): void {
+
+  public createNewBar(previousIndex: number, row: Row): void {
     const previousBar: Bar = row.bars[previousIndex];
     const newBarElement: Bar = {
       ...previousBar,
@@ -204,23 +189,6 @@ export class TabulatureService {
     return Regex.isNumber.test(fretNumber) && !!this.highlight$;
   }
 
-  private getNoteWidth(note: NoteEnum): number {
-    switch (note) {
-      case NoteEnum.WHOLE_NOTE:
-        return TabInterface.durationOneLength;
-      case NoteEnum.HALF_NOTE:
-        return TabInterface.durationTwoLength;
-      case NoteEnum.QUARTER_NOTE:
-        return TabInterface.durationFourLength
-      case NoteEnum.EIGHTH_NOTE:
-        return TabInterface.durationEightLength
-      case NoteEnum.SIXTEENTH_NOTE:
-        return TabInterface.durationSixteenLength
-      case NoteEnum.THIRTY_SECOND_NOTE:
-        return TabInterface.durationThirtyTwoLength
-    }
-  }
-
   private defineObjectNote(bar: Bar, barItem: BarItem, columnNumber: number) {
     if(!!barItem.note?.type){
       return barItem;
@@ -231,7 +199,7 @@ export class TabulatureService {
 
     barItem.note = {
       type: noteType,
-      width: this.getNoteWidth(noteType)
+      width: GetNoteWidth(noteType)
     }
 
     return barItem
@@ -270,29 +238,23 @@ export class TabulatureService {
       }
   }
 
-  private initializeFirstItem(): BarItem {
-    return {
-      x: TabInterface.PADDING,
-      y: this.SPACE_BETWEEN_LINES,
-      xIndex: 0,
-      tabObject: {
-        positionX: 0,
-        barNumber: 0,
-        type: TabObjectType.TimeSignature,
-      }
-    }
-  }
-
   private initializeBarItems(barNumber: number): BarItem[][] {
     let barItems: BarItem[][] = [];
     for (let i = 0; i < 4; i++) {
       barItems[i] = []
-      for (let j = 0; j < this.NUMBER_OF_LINES; j++) {
+      for (let j = 0; j < TabInterface.NUMBER_OF_LINES; j++) {
           barItems[i][j] = {
             x: TabInterface.PADDING + (barNumber * (4 * TabInterface.durationFourLength) + (i * TabInterface.durationFourLength)),
             y: this.SPACE_BETWEEN_LINES + (this.SPACE_BETWEEN_LINES * j),
             stringNumber: j + 1,
             xIndex: i,
+            note: {
+              type: NoteEnum.QUARTER_NOTE,
+              width: GetNoteWidth(NoteEnum.QUARTER_NOTE),
+            },
+            tabObject: {
+              type: TabObjectType.Note
+            }
           }
       }
     }
@@ -337,12 +299,11 @@ export class TabulatureService {
       });
     }
 
+
     newTabulation.forEach(row => {
       const { tabulationPath } = this.tabRenderService.renderRowPath(row.bars);
       row.path = tabulationPath;
     });
-
-
     return this.tabRenderService.recalculateBarItemsPositions(newTabulation);
   }
 

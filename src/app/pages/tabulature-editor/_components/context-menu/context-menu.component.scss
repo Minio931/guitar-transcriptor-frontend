@@ -1,0 +1,32 @@
+.custom-context-menu {
+  .p-contextmenu-root-list, .p-contextmenu-submenu	{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .p-menuitem {
+    text-align: center !important;
+  }
+  .p-contextmenu-item-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    .ng-star-inserted {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+  .p-contextmenu-item-link{
+    gap: 0;
+  }
+}
+

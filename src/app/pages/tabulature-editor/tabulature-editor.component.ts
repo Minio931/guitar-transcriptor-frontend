@@ -10,19 +10,22 @@ import {
 } from "@angular/core";
 import {TabulatureService} from "../../services/tabulature.service";
 import {TabInterface} from "../../configs/tab-interface.config";
-import {HiglightItemPosition} from "../../types/higlight-item-position.type";
 import {ArrowKey} from "../../types/arrow-key.type";
 import {ArrowKeyEnum} from "../../enums/arrow-key.enum";
-import {TimeSignature} from "../../types/time-signature.type";
 import {TabulatureRowComponent} from "./_components/tabulature-row/tabulature-row.component";
 import {Row} from "../../types/row.type";
 import {TabObjectType} from "../../enums/tab-object-type.enum";
+import {HighlightService} from "../../services/highlight.service";
 
 @Component({
   selector: "app-tabulature-editor",
   standalone: true,
   imports: [
     TabulatureRowComponent
+  ],
+  providers: [
+    HighlightService,
+    TabulatureService
   ],
   templateUrl: "./tabulature-editor.component.html",
   styleUrl: "./tabulature-editor.component.scss"
@@ -36,49 +39,17 @@ export class TabulatureEditorComponent implements AfterViewInit{
     this.tabulatureService.containerWidth.set(width);
   }
 
-  set tabLines(linesPath: string) {
-    this.tabulatureService.tabLines.set(linesPath)
-  }
-
-  get tabLines(): string {
-    return this.tabulatureService.tabLines();
-  }
-
   get activeGuitarTuning(): string[] {
     return this.tabulatureService.activeGuitarTuning();
-  }
-
-  get highlightedItemPosition(): HiglightItemPosition {
-    return this.tabulatureService.highlightedItemPosition();
   }
 
   get SPACE_BETWEEN_LINES(): number {
     return this.tabulatureService.SPACE_BETWEEN_LINES;
   }
 
-  get timeSignature(): TimeSignature {
-    return this.tabulatureService.timeSignature();
-  }
-
-  set barLines(barLines: string) {
-    this.tabulatureService.barLines.set(barLines)
-  }
-
-  get barLines(): string {
-    return this.tabulatureService.barLines();
-  }
-
-  get tabRow(): string[] {
-    return this.tabulatureService.tabulationPaths();
-  }
-
   get tabulation(): Row[] {
     return this.tabulatureService.tabulation();
   }
-
-  // get tabulationGrid(): TabulationGridItem[] {
-  //   return this.tabulatureService.tabulationGrid().flat(Infinity) as TabulationGridItem[];
-  // }
 
   tabulatureService: TabulatureService = inject(TabulatureService);
 
