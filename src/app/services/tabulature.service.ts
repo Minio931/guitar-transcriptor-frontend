@@ -304,7 +304,6 @@ export class TabulatureService {
       const { tabulationPath } = this.tabRenderService.renderRowPath(row.bars);
       row.path = tabulationPath;
     });
-
     return this.tabRenderService.recalculateBarItemsPositions(newTabulation);
   }
 

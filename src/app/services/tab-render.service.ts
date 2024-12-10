@@ -4,10 +4,7 @@ import {BarItem} from "../types/bar-item.type";
 import {TabObjectType} from "../enums/tab-object-type.enum";
 import {TabInterface} from "../configs/tab-interface.config";
 import {Row} from "../types/row.type";
-import {TimeSignature} from "../types/time-signature.type";
 import {GetColumnItemWidthFunction} from "../functions/get-column-item-width.function";
-import {NoteEnum} from "../enums/note.enum";
-import {GetNoteWidth} from "../functions/get-note-width.function";
 
 
 @Injectable({providedIn: "root"})
@@ -17,7 +14,8 @@ export class TabRenderService {
       row.bars.forEach((bar: Bar, barIndex: number) => {
         bar.items.map((column: BarItem[], columnIndex: number) => {
           return column.map((item: BarItem) => {
-            item.x = this.calculatePositionX(item?.note?.type ?? NoteEnum.QUARTER_NOTE, bar.timeSignature, barIndex, columnIndex, bar);
+            const previousBarsWidth = this.previousBarsWidth(barIndex, row.bars);
+            item.x = this.calculatePositionX(previousBarsWidth,  columnIndex, bar);
           })
         })
       })
@@ -53,12 +51,13 @@ export class TabRenderService {
     let tabulationPath: string[] = [];
     let rowWidth = 0;
     bars.forEach((bar: Bar, index) => {
-      const barWidth = this.calculateLengthOfBar(bar);
-      rowWidth += barWidth;
-      const x: number = index * barWidth;
+      const currBarWidth = this.calculateLengthOfBar(bar);
+      const beforeBarsWidth = this.previousBarsWidth(index , bars);
+      rowWidth += currBarWidth;
+      const x: number = beforeBarsWidth;
       const y: number = TabInterface.SPACE_BETWEEN_LINES;
       const v: number = TabInterface.NUMBER_OF_LINES * TabInterface.SPACE_BETWEEN_LINES;
-      tabulationPath.push(this.generateBar(x, y, v, barWidth));
+      tabulationPath.push(this.generateBar(x, y, v, currBarWidth));
     })
 
     return {
@@ -94,17 +93,23 @@ export class TabRenderService {
             denominator === 16 ? TabInterface.durationSixteenLength : TabInterface.durationThirtyTwoLength;
   }
 
-  private calculatePositionX(type: NoteEnum, timeSignature: TimeSignature, barNumber: number, columnIndex: number, bar: Bar): number {
-    const barWidth = this.calculateLengthOfBar(bar);
+  private calculatePositionX(previousBarsWidth: number,  columnIndex: number, bar: Bar): number {
     const itemsBefore = bar.items.slice(0, columnIndex );
     const widthItemsBefore = this.getOneItemPerColumn(itemsBefore).reduce((acc, curr) => {
         return acc + GetColumnItemWidthFunction(curr?.tabObject?.type, curr?.note?.type);
     }, 0);
 
-    return TabInterface.PADDING  + ((barWidth * barNumber) + widthItemsBefore);
+    return TabInterface.PADDING  + previousBarsWidth + widthItemsBefore;
   }
 
   private getOneItemPerColumn(items: BarItem[][]): BarItem[] {
     return items.map((column: BarItem[]) => column.slice(0, 1)).flat(Infinity) as BarItem[]
+  }
+
+  private previousBarsWidth(index: number, bars: Bar[]) {
+    const barsBeforeCurrent = bars.slice(0, index);
+    return barsBeforeCurrent.reduce((acc, curr) => {
+      return acc + this.calculateLengthOfBar(curr);
+    }, 0)
   }
 }

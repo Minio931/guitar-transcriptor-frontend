@@ -51,7 +51,7 @@ export class ContextMenuService {
     }
 
     newTabulation[rowNumber].bars[barNumber] = bar;
-
+    console.log(newTabulation);
     this.tabulatureService.updateTabulation(newTabulation)
   }
 
