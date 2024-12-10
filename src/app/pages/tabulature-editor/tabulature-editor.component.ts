@@ -15,12 +15,17 @@ import {ArrowKeyEnum} from "../../enums/arrow-key.enum";
 import {TabulatureRowComponent} from "./_components/tabulature-row/tabulature-row.component";
 import {Row} from "../../types/row.type";
 import {TabObjectType} from "../../enums/tab-object-type.enum";
+import {HighlightService} from "../../services/highlight.service";
 
 @Component({
   selector: "app-tabulature-editor",
   standalone: true,
   imports: [
     TabulatureRowComponent
+  ],
+  providers: [
+    HighlightService,
+    TabulatureService
   ],
   templateUrl: "./tabulature-editor.component.html",
   styleUrl: "./tabulature-editor.component.scss"

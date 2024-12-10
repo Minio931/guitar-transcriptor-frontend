@@ -1,4 +1,4 @@
-import {Injectable, Signal, signal} from "@angular/core";
+import {inject, Injectable, Injector, Signal, signal} from "@angular/core";
 import {HighlightPosition} from "../types/highlight-position.type";
 import {Row} from "../types/row.type";
 import {MousePosition} from "../types/mouse-position.type";
@@ -6,10 +6,23 @@ import {Bar} from "../types/bar.type";
 import {BarItem} from "../types/bar-item.type";
 import {ArrowKey} from "../types/arrow-key.type";
 import {ArrowKeyEnum} from "../enums/arrow-key.enum";
+import {TabulatureService} from "./tabulature.service";
+
 
 
 @Injectable({providedIn: 'root'})
 export class HighlightService {
+
+  injector = inject(Injector);
+
+  tabulatureService: TabulatureService | null = null;
+
+  constructor() {
+    setTimeout(() => {
+      this.tabulatureService = this.injector.get(TabulatureService);
+    })
+  }
+
   private _highlight = signal<HighlightPosition | null>(null);
 
   get highlight():HighlightPosition | null {
@@ -98,7 +111,7 @@ export class HighlightService {
 
     if (column < 0 || column >= currentRow.bars[barIndex]?.items?.length) {
       bar = currentRow.bars[barIndex + summand] ??
-        (tabulation[rowIndex + summand]?.bars[direction === ArrowKeyEnum.ArrowLeft ? tabulation[rowNumber + summand]?.bars.length - 1 : 0]);
+        (tabulation[rowIndex + summand]?.bars[direction === ArrowKeyEnum.ArrowLeft ? tabulation[rowNumber + summand]?.bars.length - 1 : 0] ?? null);
 
       barIndex = currentRow.bars[barIndex + summand]
         ? barNumber + summand
@@ -110,7 +123,8 @@ export class HighlightService {
     }
 
     if (bar === null) {
-
+      this.tabulatureService?.createNewBar(barIndex , currentRow)
+      this.tabulatureService?.renderBars();
     }
 
     const barItem: BarItem | null = bar?.items[column][stringNumber - 1] ?? null;

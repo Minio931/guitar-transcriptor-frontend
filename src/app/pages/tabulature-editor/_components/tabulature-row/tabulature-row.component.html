@@ -5,7 +5,7 @@
         <rect [attr.width]="rowWidth()" [attr.height]="rowHeight()" fill="white"></rect>
 
         @for (mask of barItems(); track $index ){
-          @if(!!mask.tabObject) {
+          @if(!!mask.tabObject?.fretNumber) {
             <rect
               [attr.x]="(mask?.tabObject?.fretNumber ?? 0) > 9 ? mask.x - TabInterface.FONT_SIZE / 2 : mask.x - TabInterface.FONT_SIZE / 4"
               [attr.y]="mask.y - TabInterface.FONT_SIZE / 4"

@@ -1,9 +1,9 @@
 import {TabObjectType} from "../enums/tab-object-type.enum";
 
 export type TabObjectItem = {
-  positionX: number;
+  positionX?: number;
   stringNumber?: number;
   fretNumber?: number;
-  barNumber: number;
+  barNumber?: number;
   type: TabObjectType;
 }
