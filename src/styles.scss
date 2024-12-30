@@ -1,15 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+/* Context Menu Icons */
+@import './assets/note.scss';
+@import './assets/pause.scss';
+@import "./assets/other.scss";
+
+/* Prime Icons */
+@import "primeicons/primeicons.css";
+
+/* PrimeNG Custom Styles */
+@import "./assets/styles/p-dialog.scss";
+@import "./assets/styles/p-input-number.scss";
+
+:root {
+  --primary: #9B004A;
+}
 body {
   background: #0E1116;
 }
 
 /* custom-icons  */
 
-.eighth-svg-icon {
-  color: #fff;
-  background-image: url("/assets/notes/eighth_note.svg");
-  width: 1.5rem;
-  height: 1.5rem;
-  display: inline-block;
-  background-size: cover;
-}

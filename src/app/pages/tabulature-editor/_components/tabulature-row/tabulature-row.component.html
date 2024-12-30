@@ -1,4 +1,4 @@
-<div  class="tabulature-row">
+<div class="tabulature-row">
   <svg  #rowElement (click)="highlightSpotOnStaff($event)" [attr.width]="rowWidth()" [attr.height]="rowHeight()">
     <defs>
       <mask [attr.id]="tabulationRowId()">
@@ -17,14 +17,47 @@
         }
       </mask>
     </defs>
+    @for (bar of rowBars(); track $index) {
+
+      <text
+            [attr.x]="this.tabRenderService.calculateBarLeftTopCornerPosition(bar, rowBars()).x + 5"
+            [attr.y]="TabInterface.SPACE_BETWEEN_LINES - 10"
+            [attr.font-size]="TabInterface.FONT_SIZE"
+            [attr.fill]="'#9B9B93'"
+      >{{bar.id}}</text>
+      @if (errorForBar($index)) {
+        <rect
+          [attr.x]="this.tabRenderService.calculateBarLeftTopCornerPosition(bar, rowBars()).x + 1"
+          [attr.y]="TabInterface.SPACE_BETWEEN_LINES - (10 + TabInterface.FONT_SIZE / 1.125)"
+          [attr.width]="TabInterface.FONT_SIZE + 2"
+          [attr.height]="TabInterface.FONT_SIZE + 2"
+          rx="2"
+          ry="2"
+          fill="red"
+          fill-opacity="0.5"
+          class="hasError"
+          [pTooltip]="errorForBar($index)?.errorMessage"
+          [escape]="false"
+          (mouseover)="adjustTooltipPosition($event)"
+        >
+        </rect>
+      }
+
+    }
     <path [attr.mask]="'url(#' + tabulationRowId() + ')'" [attr.d]="rowPath()" [attr.stroke]="'#9B9B93'" [attr.stroke-width]="TabInterface.STROKE_WIDTH" [attr.fill]="'none'"/>
-    <rect #highlight  [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="this.highlightPosition().x - this.adjustHighlightRectangle()" [attr.y]="this.highlightPosition().y - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.fill]="'#34F6F2'"></rect>
+
+    <g class="additionalItemsContainer">
+
+    </g>
 
     @for (item of barItems(); track $index) {
       @if (!!item.tabObject) {
-        <text [attr.x]="(item?.tabObject?.fretNumber ?? 0) > 9 ? item.x - (TabInterface.FONT_SIZE / 4) : item.x" [attr.y]="item.y + ((TabInterface.FONT_SIZE / 2) - TabInterface.STROKE_WIDTH)" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'#9B9B93'">{{item?.tabObject?.fretNumber}}</text>
+        <text [attr.x]="(item?.tabObject?.fretNumber ?? 0) > 9 ? item.x - (TabInterface.FONT_SIZE / 4) : item.x" [attr.y]="item.y + ((TabInterface.FONT_SIZE / 2) - TabInterface.STROKE_WIDTH)" [attr.font-size]="TabInterface.FONT_SIZE" [attr.fill]="'white'">{{item?.tabObject?.fretNumber}}</text>
       }
     }
+    <rect #highlight fill-opacity="0.5" [attr.width]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" [attr.height]="TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)" rx="5" ry="5" [attr.x]="this.highlightPosition().x - this.adjustHighlightRectangle()" [attr.y]="this.highlightPosition().y - (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2" [attr.fill]="'#34F6F2'"></rect>
+
+
 
 <!--    @for (bar of rowBars(); track $index) {-->
 <!--      @for (barColumn of bar.items; track $index) {-->
@@ -34,5 +67,34 @@
 <!--      }-->
 <!--    }-->
   </svg>
+
+  @if (this.rowHighlighted()) {
+    <div (click)="op.toggle($event)" class="highlightable-icon-group" [attr.style]="'left:' + (this.lengthOfBar() - TabInterface.PADDING / 2) + 'px;top:' + TabInterface.SPACE_BETWEEN_LINES * 6.5 + 'px'">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="24"
+           height="24"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="2"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           class="highlightable-icon">
+
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+        <path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+        <path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+      </svg>
+    </div>
+
+    <p-popover styleClass="custom-popover" #op>
+      @for (menuItem of barMenuItems; track $index) {
+          <div class="menu-item" pTooltip="{{menuItem.label}}" (click)="menuItem.action()" tooltipPosition="bottom">
+            <i [attr.class]="menuItem.icon" style="font-size: 1.5rem;"></i>
+          </div>
+      }
+    </p-popover>
+  }
   <app-context-menu [menuTarget]="highlight"/>
 </div>

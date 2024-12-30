@@ -6,7 +6,7 @@ import {
   HostListener,
   inject,
   signal,
-  ViewChild
+  ViewChild, ViewEncapsulation
 } from "@angular/core";
 import {TabulatureService} from "../../services/tabulature.service";
 import {TabInterface} from "../../configs/tab-interface.config";
@@ -16,19 +16,23 @@ import {TabulatureRowComponent} from "./_components/tabulature-row/tabulature-ro
 import {Row} from "../../types/row.type";
 import {TabObjectType} from "../../enums/tab-object-type.enum";
 import {HighlightService} from "../../services/highlight.service";
+import {BarError} from "../../types/bar-error.type";
+import {NgTemplateOutlet} from "@angular/common";
+import {TimeSignatureDialogComponent} from "./_components/time-signature-dialog/time-signature-dialog.component";
+import {TimeSignatureService} from "./_components/time-signature-dialog/time-signature.service";
+
 
 @Component({
   selector: "app-tabulature-editor",
   standalone: true,
   imports: [
-    TabulatureRowComponent
-  ],
-  providers: [
-    HighlightService,
-    TabulatureService
+    TabulatureRowComponent,
+    NgTemplateOutlet,
+    TimeSignatureDialogComponent,
   ],
   templateUrl: "./tabulature-editor.component.html",
-  styleUrl: "./tabulature-editor.component.scss"
+  styleUrl: "./tabulature-editor.component.scss",
+  encapsulation: ViewEncapsulation.None
 })
 export class TabulatureEditorComponent implements AfterViewInit{
   protected readonly TabInterface = TabInterface
@@ -51,13 +55,15 @@ export class TabulatureEditorComponent implements AfterViewInit{
     return this.tabulatureService.tabulation();
   }
 
+  get barErrors(): BarError[] {
+    return this.tabulatureService.barErrors();
+  }
+
   tabulatureService: TabulatureService = inject(TabulatureService);
 
   @ViewChild("rowsContainer") staffElement!: ElementRef;
 
-  constructor(private changeDetectionRef: ChangeDetectorRef) {
-
-  }
+  constructor(private changeDetectionRef: ChangeDetectorRef) {}
 
   ngAfterViewInit() {
     this.initializeTabulature();
@@ -66,12 +72,10 @@ export class TabulatureEditorComponent implements AfterViewInit{
       });
   }
 
-  private initializeTabulature() {
-    this.containerWidth = this.staffElement.nativeElement.offsetWidth;
-    this.tabulatureService.initializeBars();
-    this.tabulatureService.renderBars();
-    this.changeDetectionRef.detectChanges();
+  public currentBarErrors(index: number): BarError[] {
+    return this.barErrors.filter(error => error.rowIndex === index);
   }
+
 
   @HostListener("window:keydown", ["$event"])
   public handleKeyDown(event: KeyboardEvent) {
@@ -82,6 +86,13 @@ export class TabulatureEditorComponent implements AfterViewInit{
       this.tabulatureService.removeTabElement();
     }
     this.tabulatureService.insertTabElement(TabObjectType.Note, event.key);
+  }
+
+  private initializeTabulature() {
+    this.containerWidth = this.staffElement.nativeElement.offsetWidth;
+    this.tabulatureService.initializeBars();
+    this.tabulatureService.renderBars();
+    this.changeDetectionRef.detectChanges();
   }
 
 }

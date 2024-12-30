@@ -16,5 +16,7 @@ export function GetNoteWidth(note: NoteEnum): number {
       return TabInterface.durationSixteenLength
     case NoteEnum.THIRTY_SECOND_NOTE:
       return TabInterface.durationThirtyTwoLength
+    case NoteEnum.SIXTY_FOURTH_NOTE:
+      return TabInterface.durationSixtyFourLength
   }
 }

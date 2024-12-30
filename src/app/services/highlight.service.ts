@@ -7,6 +7,8 @@ import {BarItem} from "../types/bar-item.type";
 import {ArrowKey} from "../types/arrow-key.type";
 import {ArrowKeyEnum} from "../enums/arrow-key.enum";
 import {TabulatureService} from "./tabulature.service";
+import {CalculateBarValue} from "../functions/calculate-bar-value.function";
+import {TimeSignature} from "../types/time-signature.type";
 
 
 
@@ -25,7 +27,7 @@ export class HighlightService {
 
   private _highlight = signal<HighlightPosition | null>(null);
 
-  get highlight():HighlightPosition | null {
+  get highlight(): HighlightPosition | null {
     return this._highlight();
   }
 
@@ -107,6 +109,19 @@ export class HighlightService {
     const summand = direction === ArrowKeyEnum.ArrowLeft ? -1 : 1;
     let bar: Bar | null = currentRow.bars[barNumber] ?? null;
 
+    if (direction === ArrowKeyEnum.ArrowRight && columnNumber === currentRow.bars[barNumber]?.items?.length - 1) {
+
+      if (bar) {
+        const mergedBar = this.mergeDividedBars(tabulation, currentRow, rowNumber, barNumber);
+        const barValue = CalculateBarValue(mergedBar ?? bar);
+        const timeSignature: TimeSignature = bar.timeSignature
+        const difference = barValue - (timeSignature.numerator / timeSignature.denominator);
+        if (difference < 0) {
+          this.tabulatureService?.createNewColumn(rowNumber, barNumber, columnNumber + 1, bar.items[columnNumber][stringNumber - 1]);
+        }
+      }
+    }
+
     column += summand;
 
     if (column < 0 || column >= currentRow.bars[barIndex]?.items?.length) {
@@ -182,5 +197,37 @@ export class HighlightService {
       stringNumber: string,
       barNumber: barIndex
     }
+  }
+
+  private checkIfNextBarHasDivided(tabulation: Row[], currentRow: Row,  rowNumber: number, barNumber: number): boolean {
+    const nextRow: Row | null = tabulation[rowNumber + 1];
+    const isLastBar: boolean = barNumber === currentRow.bars.length - 1;
+    const nextBar: Bar | null = nextRow?.bars[0];
+
+    if (nextBar === null) {
+      return false;
+    }
+
+    if (isLastBar) {
+      return nextBar?.divided ?? false;
+    }
+
+    return false;
+  }
+
+  private mergeDividedBars(tabulation: Row[], currentRow: Row,  rowNumber: number, barNumber: number): Bar | null {
+    const currentBar: Bar | null = currentRow.bars[barNumber] ?? null;
+    const nextBar: Bar | null = tabulation[rowNumber + 1]?.bars[0] ?? null;
+
+    if (nextBar === null || !this.tabulatureService?.isDivided(nextBar)) {
+      return null;
+    }
+
+    if (currentBar === null || !this.tabulatureService?.isDivided(currentBar)) {
+      return null;
+    }
+
+    currentBar.items = currentBar.items.concat(nextBar.items);
+    return currentBar;
   }
 }

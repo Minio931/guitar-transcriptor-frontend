@@ -1,0 +1,10 @@
+.p-inputnumber  {
+  width: 4rem;
+  .p-inputtext {
+    text-align: center;
+    width: 100%;
+    &:focus {
+      border: var(--primary) solid 1px !important;
+    }
+  }
+}

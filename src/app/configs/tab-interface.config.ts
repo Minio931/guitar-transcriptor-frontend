@@ -21,5 +21,7 @@ export class TabInterface {
 
   static readonly durationThirtyTwoLength: number = this.durationSixteenLength / 2;
 
+  static readonly durationSixtyFourLength: number = this.durationThirtyTwoLength / 2;
+
   static readonly timeSignatureLength: number = 100;
 }

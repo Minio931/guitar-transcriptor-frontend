@@ -5,4 +5,5 @@ export enum NoteEnum {
   EIGHTH_NOTE = "8",
   SIXTEENTH_NOTE = "16",
   THIRTY_SECOND_NOTE = "32",
+  SIXTY_FOURTH_NOTE = "64",
 }
