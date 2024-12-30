@@ -7,6 +7,7 @@ export type Bar = {
   items: BarItem[][];
   timeSignature: TimeSignature;
   tempo: number;
+  divided: boolean;
   repeatStarts: boolean;
   repeatEnds: boolean;
 }

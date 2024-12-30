@@ -10,11 +10,17 @@ import {Bar} from "../types/bar.type";
 import {GetNoteWidth} from "../functions/get-note-width.function";
 import {TimeSignature} from "../types/time-signature.type";
 import {TabInterface} from "../configs/tab-interface.config";
+import {FullLineElement} from "../enums/full-line-element.enum";
+import {
+  TimeSignatureService
+} from "../pages/tabulature-editor/_components/time-signature-dialog/time-signature.service";
 
 
 @Injectable({providedIn: 'root'})
 export class ContextMenuService {
   tabulatureService: TabulatureService = inject(TabulatureService);
+  timeSignatureService: TimeSignatureService = inject(TimeSignatureService);
+
 
   public get tabulation$(): Row[] {
     return this.tabulatureService.tabulation();
@@ -32,7 +38,16 @@ export class ContextMenuService {
         }
 
         break;
+      case TabObjectType.TimeSignature:
+        if (option === FullLineElement.TIME_SIGNATURE) {
+          this.modifyTimeSignatureForBar();
+        }
+        break;
     }
+  }
+
+  public openTimeSignatureDialog() {
+    this.timeSignatureService.showDialog();
   }
 
   private modifyBarElements(note: NoteEnum) {
@@ -51,8 +66,12 @@ export class ContextMenuService {
     }
 
     newTabulation[rowNumber].bars[barNumber] = bar;
-    console.log(newTabulation);
+
     this.tabulatureService.updateTabulation(newTabulation)
+  }
+
+  private modifyTimeSignatureForBar() {
+
   }
 
   private isNoteEnum(option: any): option is NoteEnum {

@@ -1,0 +1,24 @@
+.p-dialog {
+  width: 45vw;
+
+  @media (max-width: 768px) {
+    width: 90vw;
+  }
+  .p-dialog-header{
+    padding: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Roboto', sans-serif;
+    border-bottom: 1px solid #696969;
+  }
+
+  .time-signature-dialog {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+  }
+
+}

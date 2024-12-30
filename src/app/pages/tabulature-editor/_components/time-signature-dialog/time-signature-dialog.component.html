@@ -1,0 +1,57 @@
+<p-dialog
+  [(visible)]="visible"
+  styleClass="p-dialog--time-signature"
+  [header]="'_TimeSignature.Time signature' | transloco" >
+  <div class="time-signature-dialog">
+    <div class="time-signature-dialog__input-group">
+      <p-button
+        icon="pi pi-minus"
+        [rounded]="true"
+        [outlined]="true"
+        (click)="handleDecreaseTimeSignatureNumerator()"></p-button>
+      <p-input-number
+        [(ngModel)]="timeSignature.numerator"
+        styleClass="p-input-number-selector"
+        min="1"
+        max="64" />
+      <p-button
+        icon="pi pi-plus"
+        [rounded]="true"
+        [outlined]="true"
+        (click)="handleIncreaseTimeSignatureNumerator()"></p-button>
+    </div>
+
+    <div class="time-signature-dialog__input-group">
+      <p-button
+        icon="pi pi-minus"
+        [rounded]="true"
+        [outlined]="true"
+        (click)="handleDecreaseTimeSignatureDenominator()"></p-button>
+      <p-input-number
+        [(ngModel)]="timeSignature.denominator"
+        styleClass="p-input-number-selector"
+        min="1"
+        max="64"
+      />
+      <p-button
+        icon="pi pi-plus"
+        [rounded]="true"
+        [outlined]="true"
+        (click)="handleIncreaseTimeSignatureDenominator()"></p-button>
+    </div>
+
+    <div class="time-signature-dialog__actions">
+      <p-button
+        [label]="'_Label.Cancel' | transloco"
+        [text]="true"
+        [raised]="true"
+        (click)="handleCancel()"
+      ></p-button>
+      <p-button
+        [label]="'_Label.Save' | transloco"
+        [raised]="true"
+        (click)="handleSave()"
+      ></p-button>
+      </div>
+  </div>
+</p-dialog>

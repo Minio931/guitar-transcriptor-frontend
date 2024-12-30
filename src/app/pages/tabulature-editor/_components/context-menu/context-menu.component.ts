@@ -2,12 +2,10 @@ import {Component, inject, input, QueryList, ViewChildren, ViewContainerRef, Vie
 import {ContextMenu} from "primeng/contextmenu";
 import {Button} from "primeng/button";
 import {MenuItem} from "primeng/api";
-import {EighthNoteSvgComponent} from "../../../../assets/eighth-note-svg.component";
 import {CommonModule} from "@angular/common";
 import {Tooltip} from "primeng/tooltip";
 import {ContextMenuService} from "../../../../services/context-menu.service";
-import {TabObjectType} from "../../../../enums/tab-object-type.enum";
-import {NoteEnum} from "../../../../enums/note.enum";
+import {getContextMenuItems} from "../../../../configs/context-menu.config";
 
 @Component({
   selector: 'app-context-menu',
@@ -16,7 +14,6 @@ import {NoteEnum} from "../../../../enums/note.enum";
     CommonModule,
     Button,
     ContextMenu,
-    EighthNoteSvgComponent,
     Tooltip
   ],
   providers: [
@@ -36,38 +33,6 @@ export class ContextMenuComponent {
   iconContainers!: QueryList<ViewContainerRef>
 
 
-  menuItems: MenuItem[] = [
-    {
-      label: '1/1',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.WHOLE_NOTE),
-    },
-    {
-      label: '1/2',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.HALF_NOTE),
-    },
-    {
-      label: '1/4',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.QUARTER_NOTE),
-    },
-    {
-      label: '1/8',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.EIGHTH_NOTE),
-    },
-    {
-      label: '1/16',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.SIXTEENTH_NOTE),
-    },
-    {
-      label: '1/32',
-      icon: "eighth-svg-icon",
-      command: () => this.contextMenuService.tabContextAction(TabObjectType.Note, NoteEnum.THIRTY_SECOND_NOTE),
-    },
-
-  ]
+  menuItems: MenuItem[] = getContextMenuItems(this.contextMenuService);
 
 }

@@ -1,4 +1,4 @@
-import {inject, Injectable, Injector, signal} from "@angular/core";
+import {computed, inject, Injectable, Injector, signal} from "@angular/core";
 import {HighlightPosition} from "../types/highlight-position.type";
 import {BarItem} from "../types/bar-item.type";
 import {TabInterface} from "../configs/tab-interface.config";
@@ -14,6 +14,10 @@ import {NoteEnum} from "../enums/note.enum";
 import {HighlightService} from "./highlight.service";
 import {TabRenderService} from "./tab-render.service";
 import {GetNoteWidth} from "../functions/get-note-width.function";
+import {BarError} from "../types/bar-error.type";
+import {Tab} from "primeng/tabs";
+import {GetOneItemPerColumn} from "../functions/get-one-item-per-column.function";
+import {GetColumnItemWidthFunction} from "../functions/get-column-item-width.function";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
@@ -25,6 +29,7 @@ const INITIAL_TIME_SIGNATURE: TimeSignature = {
 
 @Injectable({providedIn: "root"})
 export class TabulatureService {
+  //TODO: Przenieść do configu albo jako const
   readonly NUMBER_OF_LINES: number = 6;
 
   readonly SPACE_BETWEEN_LINES: number = 25;
@@ -35,27 +40,13 @@ export class TabulatureService {
 
   spaceBetweenItems = signal<number>(INITIAL_SPACE_BETWEEN_ITEMS);
 
-  // timeSignature = signal<TimeSignature>(INITIAL_TIME_SIGNATURE)
-  //
-  // barLinesPositions = signal<Position[]>([]);
-  //
-  // tabLines = signal<string>("");
-  //
-  // barLines = signal<string>("");
-
   activeGuitarTuning = signal<string[]>(INITIAL_GUITAR_TUNING);
 
   tabulation = signal<Row[]>([]);
 
-  // tabulationPaths = signal<string[]>([])
-
-  // highlightedTabulationGridItem = signal<BarItem | null>(null);
-
   highlight = signal<HighlightPosition | null>(null);
 
   defaultNoteType = signal<NoteEnum>(NoteEnum.QUARTER_NOTE)
-
-  // currentBarNumber = signal<number>(0);
 
   tabulationRender = signal<TabulationRender>({
     numberOfBars: 1,
@@ -66,22 +57,50 @@ export class TabulatureService {
 
   public containerWidth = signal<number>(0);
 
-  // tabulationLinesWidth = computed<number>(() => {
-  //   return (this.containerWidth() );
-  // });
-  //
-  // barWidth = computed<number>(() => {
-  //   return (this.spaceBetweenItems() * this.timeSignature().numerator) + this.spaceBetweenItems() / 2;
-  // })
-  //
-  //
-  // highlightedItemPosition = computed<Position>( () => {
-  //   const shiftToCenter: number = (TabInterface.FONT_SIZE + (TabInterface.FONT_SIZE / 2)) / 2;
-  //   return {
-  //     x: (this.highlightedTabulationGridItem()?.x ?? - 100 )- shiftToCenter + ( (this.highlightedTabulationGridItem()?.tabObject?.fretNumber ?? 0) > 9 ? TabInterface.FONT_SIZE / 3 : TabInterface.FONT_SIZE / 4),
-  //     y: (this.highlightedTabulationGridItem()?.y ?? 0)- shiftToCenter
-  //   };
-  // })
+  public barErrors = computed<BarError[]>(() => {
+    const withMergedBars = this.mergeDividedBars(JSON.parse(JSON.stringify(this.tabulation())));
+    const barErrors = withMergedBars.map((row, rowIndex) => {
+      const errors: BarError[] = [];
+      row.bars.map((bar: Bar, barIndex: number) => {
+        const timeSignature: TimeSignature = bar.timeSignature;
+        let numberOfColumns = 0;
+        let barValue = 0;
+        const notes: number[] = [];
+        bar.items.forEach((barItem: BarItem[]) => {
+          const item = barItem[0];
+
+          if (!!item.note?.type) {
+            numberOfColumns++;
+            barValue += 1/Number(item.note?.type);
+            notes.push(Number(item.note?.type));
+          }
+        })
+
+        const difference = barValue - (timeSignature.numerator / timeSignature.denominator);
+
+        if (difference < 0) {
+          const suggestedNotes = this.suggestNotesForError(difference);
+
+          errors.push({
+            rowIndex: rowIndex,
+            barIndex: barIndex,
+            errorMessage: `Bar is too short. Suggested note(s) to add: ${this.formatNotesFraction(suggestedNotes)}`
+          })
+        } else if (difference > 0) {
+          const suggestedNotes = this.suggestNotesForError(difference, notes);
+          errors.push({
+            rowIndex: rowIndex,
+            barIndex: barIndex,
+            errorMessage: `Bar is too long. Suggested note(s) to remove: ${this.formatNotesFraction(suggestedNotes)}`
+          })
+        }
+      })
+
+      return errors;
+    })
+
+    return barErrors.flat(Infinity) as BarError[];
+})
 
   public updateTabulation(tabulation: Row[]) {
     this.tabulation.set(tabulation);
@@ -115,7 +134,8 @@ export class TabulatureService {
             },
             tempo: 120,
             repeatStarts: false,
-            repeatEnds: false
+            repeatEnds: false,
+            divided: false
           });
           currentBar++;
         }
@@ -127,6 +147,14 @@ export class TabulatureService {
 
   public renderBars() {
     let tabulation: Row[]  = this.adjustingRows(this.tabulation())
+    tabulation = this.tabRenderService.recalculateBarItemsPositions(tabulation);
+    tabulation.forEach((row: Row) => {
+      const { tabulationPath, additionalItems } = this.tabRenderService.renderRowPath(row.bars);
+      row.path = tabulationPath;
+      row.additionalItems = additionalItems;
+    });
+
+
     this.tabulation.set(tabulation);
   }
 
@@ -141,7 +169,8 @@ export class TabulatureService {
   public highlightNearestItem(direction: ArrowKey) {
     if (!!this.highlight$) {
       this.fretNumber = ''
-      const highlight = this.highlightService.moveHighlight(direction, this.tabulation(), this.highlight$);
+      const tabulation = JSON.parse(JSON.stringify(this.tabulation()));
+      const highlight = this.highlightService.moveHighlight(direction, tabulation, this.highlight$);
       if (highlight) {
         this.highlightService.setHighlightPosition(highlight);
       }
@@ -156,6 +185,29 @@ export class TabulatureService {
         }
         break;
     }
+  }
+
+  public createNewColumn(row: number, bar: number, column: number, previousBarItem: BarItem) {
+    const tabulation = [...this.tabulation()];
+
+    const newBarItems: BarItem[] = [];
+
+    for (let i = 0; i < TabInterface.NUMBER_OF_LINES; i++) {
+      newBarItems[i] = {
+        ...previousBarItem,
+        x: previousBarItem.x + GetNoteWidth(previousBarItem.note?.type ?? NoteEnum.QUARTER_NOTE),
+        xIndex: column,
+        y: TabInterface.SPACE_BETWEEN_LINES * (i + 1),
+        tabObject: {
+          type: TabObjectType.Note
+        },
+        stringNumber: i + 1,
+      }
+    }
+
+
+    tabulation[row].bars[bar].items.push(newBarItems);
+    this.updateTabulation(tabulation);
   }
 
   public removeTabElement() {
@@ -173,7 +225,8 @@ export class TabulatureService {
     const previousBar: Bar = row.bars[previousIndex];
     const newBarElement: Bar = {
       ...previousBar,
-      id: previousBar.id++,
+      divided: false,
+      id: previousBar.id + 1,
       items: this.initializeBarItems(0),
       repeatStarts: false,
       repeatEnds: false,
@@ -183,6 +236,20 @@ export class TabulatureService {
     tabulation[tabulation.length - 1].bars.push(newBarElement);
 
     this.tabulation.set(tabulation);
+  }
+
+  public updateTimeSignature(timeSignature: TimeSignature) {
+
+    if (!!this.highlight$) {
+      const {rowNumber, barNumber} = this.highlight$;
+      const newTabulation = this.tabulation();
+      newTabulation[rowNumber].bars[barNumber].timeSignature = timeSignature;
+      this.updateTabulation(newTabulation);
+    }
+  }
+
+  public isDivided( bar: Bar) {
+    return bar?.divided ?? false;
   }
 
   private isItemValidToInsert(fretNumber: string): boolean {
@@ -262,50 +329,207 @@ export class TabulatureService {
     return barItems;
   }
 
+
   private adjustingRows(tabulation: Row[]): Row[] {
-    let allBars: Bar[] = [];
-
-    tabulation.forEach((row: Row) => {
-      allBars = allBars.concat(row.bars);
-    })
-
+    const allBars = tabulation.flatMap(row => row.bars);
     let newTabulation: Row[] = [];
     let currentBars: Bar[] = [];
-    let currentRowWidth: number = 0;
-    let rowId: number = 0;
+    let currentRowWidth = 0;
+    let rowId = 0;
+    const indexesToSkip: number[] = [];
 
-    allBars.forEach((bar: Bar) => {
+    for (let i = 0; i < allBars.length; i++) {
+      if (indexesToSkip.includes(i)) {
+        continue;
+      }
+
+      const bar = allBars[i];
       const barWidth = this.tabRenderService.calculateLengthOfBar(bar);
 
-      if (currentRowWidth + barWidth > this.containerWidth()) {
-          newTabulation.push({
-            id: rowId++,
-            bars: currentBars,
-            path: ''
-          })
-          currentBars = [bar];
-          currentRowWidth = barWidth;
-      } else {
-        currentBars.push(bar);
-        currentRowWidth += barWidth;
+      if (this.canFitInRow(currentRowWidth, barWidth)) {
+        currentBars = this.mergeWithPreviousOrPush(currentBars, bar, i, currentRowWidth);
+        const newBarWidth = this.tabRenderService.calculateLengthOfBar(currentBars[currentBars.length - 1]);
+        currentBars[currentBars.length - 1].divided = (allBars[i + 1]?.divided && currentBars[currentBars.length - 1].divided)  ?? false;
+        currentRowWidth += newBarWidth;
+        continue;
       }
-    })
+
+      const { fittingBar, restBar } = this.divideBarToFit(bar, currentRowWidth);
+
+      if (this.isDivided(allBars[i + 1])){
+        restBar.items = restBar.items.concat(allBars[i + 1].items);
+        restBar.divided = fittingBar.items.length > 0;
+        indexesToSkip.push(i + 1);
+      }
+
+      if (this.isDivided(currentBars[currentBars.length - 1])) {
+        currentBars[currentBars.length - 1].items = currentBars[currentBars.length - 1].items.concat(fittingBar.items);
+        currentBars[currentBars.length - 1].divided = true;
+      } else if (fittingBar.items.length > 0) {
+        currentBars.push({...fittingBar, id: i + 1});
+        currentRowWidth = 0;
+      }
+
+      newTabulation.push({
+        id: rowId++,
+        bars: [...currentBars],
+        path: '',
+      });
+
+      currentBars = [{...restBar, id: fittingBar.id}];
+      currentRowWidth = this.tabRenderService.calculateLengthOfBar(restBar);
+
+    }
 
     if (currentBars.length > 0) {
       newTabulation.push({
         id: rowId++,
-        bars: currentBars,
-        path: ''
+        bars: [...currentBars],
+        path: '',
       });
     }
 
-
-    newTabulation.forEach(row => {
-      const { tabulationPath } = this.tabRenderService.renderRowPath(row.bars);
-      row.path = tabulationPath;
-    });
-    return this.tabRenderService.recalculateBarItemsPositions(newTabulation);
+    return newTabulation;
   }
 
+  private createTimeSignature(timeSignature: TimeSignature): BarItem[] {
+    const timeSignatureElement: BarItem = {
+      x: -1,
+      y: TabInterface.SPACE_BETWEEN_LINES,
+      tabObject: {
+        type: TabObjectType.TimeSignature,
+      },
+    }
+
+    return Array.from({length: TabInterface.NUMBER_OF_LINES}, (_, i) => {
+      return {
+        ...timeSignatureElement,
+        y: TabInterface.SPACE_BETWEEN_LINES * (i + 1),
+      }
+    });
+  }
+
+
+  private suggestNotesForError(difference: number, notes?:  number[]) {
+    let remaining = Math.abs(difference);
+    const suggestedNotes: number[] = [];
+    const iteratingNotes: number[] | NoteEnum[]  = notes?.sort((a, b) => b - a) ?? Object.values(NoteEnum);
+
+    for ( const note of iteratingNotes) {
+      const noteValue = 1/Number(note);
+
+      while (remaining >= noteValue) {
+        remaining -= noteValue;
+        suggestedNotes.push(Number(note));
+        remaining = parseFloat(remaining.toFixed(2));
+      }
+    }
+
+    if (remaining > 0) {
+      suggestedNotes.push(Array.isArray(iteratingNotes)
+        ? (iteratingNotes as number[])[iteratingNotes.length - 1]
+        : Number(NoteEnum.THIRTY_SECOND_NOTE));
+    }
+
+    return suggestedNotes;
+  }
+
+  private barHasAddedTimeSignature(bar: Bar) {
+    return bar.items.some(item => item.some(item => item.tabObject?.type === TabObjectType.TimeSignature));
+  }
+
+  private formatNotesFraction(notes: number[]) {
+    return notes.map(note => `<span><sup>1</sup>/<sub>${note}</sub></span>`).join(', ');
+  }
+
+  private canFitInRow(currentRowWidth: number, barWidth: number) {
+    return currentRowWidth + barWidth < this.containerWidth();
+  }
+
+  private divideBarToFit(bar: Bar, currentRowWidth: number): {fittingBar: Bar, restBar: Bar} {
+      const widthToFit = this.containerWidth() - currentRowWidth - TabInterface.PADDING;
+      const fittingBarItems = this.extractFittingBarItems(bar, widthToFit);
+      const restBarItems = bar.items.filter((item: BarItem[]) => !fittingBarItems.includes(item));
+      const barPreviouslyDivided = this.isDivided(bar);
+
+      return {
+        fittingBar: {
+          ...bar,
+          items: fittingBarItems,
+          divided: barPreviouslyDivided || restBarItems.length > 0
+        },
+        restBar: {
+          ...bar,
+          items: restBarItems,
+          divided: barPreviouslyDivided || fittingBarItems.length > 0
+        }
+      }
+  }
+
+  private extractFittingBarItems(bar: Bar, widthToFit: number): BarItem[][] {
+    const barItems = GetOneItemPerColumn(bar.items);
+
+    const splitIndex = barItems.reduce((acc, curr: BarItem) => {
+      const width = GetColumnItemWidthFunction(curr?.tabObject?.type, curr?.note?.type);
+      if (acc.width + width < widthToFit) {
+        acc.index = acc.index + 1;
+        acc.width += width;
+      }
+      return acc;
+    }, {width: 0, index: 0}).index;
+
+    return bar.items.slice(0, splitIndex);
+  }
+
+  private mergeWithPreviousOrPush(currentBars: Bar[], bar: Bar, index: number, currentRowWidth: number): Bar[] {
+    if (currentBars.length === 0) {
+      currentBars.push({...bar, id: index + 1});
+      return currentBars;
+    }
+
+    if (this.isDivided(bar)) {
+      return this.mergeFittingBarItems(currentBars, bar, currentRowWidth);
+    }
+
+    currentBars.push({...bar, id: index + 1});
+    return currentBars;
+  }
+
+  private mergeFittingBarItems(currenBars: Bar[], bar: Bar, currentRowWidth: number) {
+    const {fittingBar, restBar} = this.divideBarToFit(bar, currentRowWidth);
+
+    if (fittingBar.items.length > 0 && currenBars[currenBars.length - 1].divided) {
+      currenBars[currenBars.length - 1].items = currenBars[currenBars.length - 1].items.concat(fittingBar.items);
+    } else if (fittingBar.items.length > 0) {
+      currenBars.push({...fittingBar, id: fittingBar.id});
+    }
+
+    if (restBar.items.length > 0) {
+      currenBars.push(restBar);
+    }
+
+    return currenBars;
+  }
+
+
+
+  private mergeDividedBars(rows: Row[]) {
+    const mergedRow: Row[] = [];
+    rows.forEach((row: Row, rowIndex: number) => {
+      if (this.nextRowHasDividedBars(rows[rowIndex + 1])) {
+        const barForMerge = rows[rowIndex + 1].bars.shift();
+        if (!!barForMerge) {
+          row.bars[row.bars.length - 1].items = row.bars[row.bars.length - 1].items.concat(barForMerge.items);
+        }
+        mergedRow.push(row);
+      }
+    })
+
+    return mergedRow;
+  }
+
+  private nextRowHasDividedBars(row?: Row) {
+    return row?.bars?.some(bar => this.isDivided(bar)) ?? false;
+  }
 
 }

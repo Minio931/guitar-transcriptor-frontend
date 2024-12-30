@@ -6,7 +6,21 @@
   </svg>
   <div #rowsContainer class="linesContainer">
     @for (row of tabulation; track $index) {
-      <app-tabulature-row [rowWidth]="width()" [rowHeight]="height()" [rowBars]="row.bars" [rowPath]="row.path" [rowNumber]="row.id" />
+      <app-tabulature-row
+        [rowWidth]="width()"
+        [rowHeight]="height()"
+        [rowBars]="row.bars"
+        [rowPath]="row.path"
+        [rowNumber]="row.id"
+        [rowErrors]="currentBarErrors(row.id)"
+        [rowAdditionalItems]="row.additionalItems ?? []"></app-tabulature-row>
     }
   </div>
+  <ng-container [ngTemplateOutlet]="timeSignatureDialog"></ng-container>
 </div>
+
+<ng-template #timeSignatureDialog>
+  <app-time-signature-dialog />
+</ng-template>
+
+
