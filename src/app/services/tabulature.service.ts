@@ -349,20 +349,20 @@ export class TabulatureService {
       if (this.canFitInRow(currentRowWidth, barWidth)) {
         currentBars = this.mergeWithPreviousOrPush(currentBars, bar, i, currentRowWidth);
         const newBarWidth = this.tabRenderService.calculateLengthOfBar(currentBars[currentBars.length - 1]);
-        currentBars[currentBars.length - 1].divided = (allBars[i + 1]?.divided && currentBars[currentBars.length - 1].divided)  ?? false;
+        currentBars[currentBars.length - 1].divided = allBars[i + 1]?.id === currentBars[currentBars.length - 1].id ?? false;
         currentRowWidth += newBarWidth;
         continue;
       }
 
       const { fittingBar, restBar } = this.divideBarToFit(bar, currentRowWidth);
 
-      if (this.isDivided(allBars[i + 1])){
+      if (this.isDivided(allBars[i + 1]) && restBar?.id === allBars[i + 1]?.id){
         restBar.items = restBar.items.concat(allBars[i + 1].items);
         restBar.divided = fittingBar.items.length > 0;
         indexesToSkip.push(i + 1);
       }
 
-      if (this.isDivided(currentBars[currentBars.length - 1])) {
+      if (this.isDivided(currentBars[currentBars.length - 1]) && currentBars[currentBars.length - 1].id === fittingBar.id) {
         currentBars[currentBars.length - 1].items = currentBars[currentBars.length - 1].items.concat(fittingBar.items);
         currentBars[currentBars.length - 1].divided = true;
       } else if (fittingBar.items.length > 0) {
