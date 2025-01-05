@@ -349,7 +349,7 @@ export class TabulatureService {
       if (this.canFitInRow(currentRowWidth, barWidth)) {
         currentBars = this.mergeWithPreviousOrPush(currentBars, bar, i, currentRowWidth);
         const newBarWidth = this.tabRenderService.calculateLengthOfBar(currentBars[currentBars.length - 1]);
-        currentBars[currentBars.length - 1].divided = allBars[i + 1]?.id === currentBars[currentBars.length - 1].id ?? false;
+        currentBars[currentBars.length - 1].divided = allBars[i + 1]?.id === currentBars[currentBars.length - 1].id;
         currentRowWidth += newBarWidth;
         continue;
       }
@@ -362,11 +362,11 @@ export class TabulatureService {
         indexesToSkip.push(i + 1);
       }
 
-      if (this.isDivided(currentBars[currentBars.length - 1]) && currentBars[currentBars.length - 1].id === fittingBar.id) {
+      if (this.isDivided(currentBars[currentBars.length - 1]) && currentBars[currentBars.length - 1].id === fittingBar.id && fittingBar.items.length > 0) {
         currentBars[currentBars.length - 1].items = currentBars[currentBars.length - 1].items.concat(fittingBar.items);
         currentBars[currentBars.length - 1].divided = true;
       } else if (fittingBar.items.length > 0) {
-        currentBars.push({...fittingBar, id: i + 1});
+        currentBars.push({...fittingBar, id: fittingBar.id ?? i + 1});
         currentRowWidth = 0;
       }
 
@@ -491,14 +491,14 @@ export class TabulatureService {
       return this.mergeFittingBarItems(currentBars, bar, currentRowWidth);
     }
 
-    currentBars.push({...bar, id: index + 1});
+    currentBars.push(bar);
     return currentBars;
   }
 
   private mergeFittingBarItems(currenBars: Bar[], bar: Bar, currentRowWidth: number) {
     const {fittingBar, restBar} = this.divideBarToFit(bar, currentRowWidth);
 
-    if (fittingBar.items.length > 0 && currenBars[currenBars.length - 1].divided) {
+    if (fittingBar.items.length > 0 && currenBars[currenBars.length - 1].divided && fittingBar.id === currenBars[currenBars.length - 1].id) {
       currenBars[currenBars.length - 1].items = currenBars[currenBars.length - 1].items.concat(fittingBar.items);
     } else if (fittingBar.items.length > 0) {
       currenBars.push({...fittingBar, id: fittingBar.id});
