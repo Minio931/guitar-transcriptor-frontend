@@ -138,7 +138,7 @@ export class HighlightService {
     }
 
     if (bar === null) {
-      this.tabulatureService?.createNewBar(barIndex , currentRow)
+      this.tabulatureService?.createNewBar(barNumber, currentRow)
       this.tabulatureService?.renderBars();
     }
 
