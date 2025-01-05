@@ -6,5 +6,10 @@
   "_Label": {
     "Save": "Zapisz",
     "Cancel": "Anuluj"
+  },
+
+  "_Error": {
+    "Bar is too short. Suggested note(s) to add:": "Takt jest za krótki. Sugerowane nuty do dodania: {{ notes }}",
+    "Bar is too long. Suggested note(s) to remove:": "Takt jest za długi. Sugerowane nuty do usunięcia: {{ notes }}"
   }
 }
