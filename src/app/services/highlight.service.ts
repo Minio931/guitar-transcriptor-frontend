@@ -9,6 +9,7 @@ import {ArrowKeyEnum} from "../enums/arrow-key.enum";
 import {TabulatureService} from "./tabulature.service";
 import {CalculateBarValue} from "../functions/calculate-bar-value.function";
 import {TimeSignature} from "../types/time-signature.type";
+import {DeepCopy} from "../functions/deep-copy.function";
 
 
 
@@ -216,8 +217,10 @@ export class HighlightService {
   }
 
   private mergeDividedBars(tabulation: Row[], currentRow: Row,  rowNumber: number, barNumber: number): Bar | null {
-    const currentBar: Bar | null = currentRow.bars[barNumber] ?? null;
-    const nextBar: Bar | null = tabulation[rowNumber + 1]?.bars[0] ?? null;
+    const tabulationCopy: Row[] = DeepCopy(tabulation);
+    const currentRowCopy: Row = DeepCopy(currentRow);
+    const currentBar: Bar | null = currentRowCopy.bars[barNumber] ?? null;
+    const nextBar: Bar | null = tabulationCopy[rowNumber + 1]?.bars[0] ?? null;
 
     if (nextBar === null || !this.tabulatureService?.isDivided(nextBar)) {
       return null;
