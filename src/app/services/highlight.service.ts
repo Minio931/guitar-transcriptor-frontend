@@ -200,37 +200,25 @@ export class HighlightService {
     }
   }
 
-  private checkIfNextBarHasDivided(tabulation: Row[], currentRow: Row,  rowNumber: number, barNumber: number): boolean {
-    const nextRow: Row | null = tabulation[rowNumber + 1];
-    const isLastBar: boolean = barNumber === currentRow.bars.length - 1;
-    const nextBar: Bar | null = nextRow?.bars[0];
-
-    if (nextBar === null) {
-      return false;
-    }
-
-    if (isLastBar) {
-      return nextBar?.divided ?? false;
-    }
-
-    return false;
-  }
 
   private mergeDividedBars(tabulation: Row[], currentRow: Row,  rowNumber: number, barNumber: number): Bar | null {
     const tabulationCopy: Row[] = DeepCopy(tabulation);
     const currentRowCopy: Row = DeepCopy(currentRow);
     const currentBar: Bar | null = currentRowCopy.bars[barNumber] ?? null;
-    const nextBar: Bar | null = tabulationCopy[rowNumber + 1]?.bars[0] ?? null;
+    const barFragments: Bar[] = tabulationCopy.flatMap((row: Row) =>
+      row.bars.filter((bar: Bar) =>
+        bar.id === currentBar?.id));
 
-    if (nextBar === null || !this.tabulatureService?.isDivided(nextBar)) {
+
+    if (currentBar === null || barFragments.length === 0) {
       return null;
     }
 
-    if (currentBar === null || !this.tabulatureService?.isDivided(currentBar)) {
+    if (!this.tabulatureService?.isDivided(currentBar)) {
       return null;
     }
 
-    currentBar.items = currentBar.items.concat(nextBar.items);
+    currentBar.items = currentBar.items.concat(barFragments.flatMap((bar: Bar) => bar.items));
     return currentBar;
   }
 }
