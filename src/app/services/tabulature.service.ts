@@ -15,9 +15,10 @@ import {HighlightService} from "./highlight.service";
 import {TabRenderService} from "./tab-render.service";
 import {GetNoteWidth} from "../functions/get-note-width.function";
 import {BarError} from "../types/bar-error.type";
-import {Tab} from "primeng/tabs";
 import {GetOneItemPerColumn} from "../functions/get-one-item-per-column.function";
 import {GetColumnItemWidthFunction} from "../functions/get-column-item-width.function";
+import {TranslocoService} from "@jsverse/transloco";
+import {DeepCopy} from "../functions/deep-copy.function";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
@@ -37,6 +38,7 @@ export class TabulatureService {
   injector = inject(Injector)
   highlightService = this.injector.get(HighlightService);
   tabRenderService = inject(TabRenderService);
+  translocoService = inject(TranslocoService);
 
   spaceBetweenItems = signal<number>(INITIAL_SPACE_BETWEEN_ITEMS);
 
@@ -58,15 +60,17 @@ export class TabulatureService {
   public containerWidth = signal<number>(0);
 
   public barErrors = computed<BarError[]>(() => {
-    const withMergedBars = this.mergeDividedBars(JSON.parse(JSON.stringify(this.tabulation())));
-    const barErrors = withMergedBars.map((row, rowIndex) => {
+    const tabulationCopy = DeepCopy(this.tabulation());
+    const barErrors = tabulationCopy.map((row, rowIndex) => {
       const errors: BarError[] = [];
       row.bars.map((bar: Bar, barIndex: number) => {
         const timeSignature: TimeSignature = bar.timeSignature;
         let numberOfColumns = 0;
         let barValue = 0;
         const notes: number[] = [];
-        bar.items.forEach((barItem: BarItem[]) => {
+        const barCopy = DeepCopy(bar);
+        const mergedBar = bar.divided ? this.mergeDividedBars(tabulationCopy, barCopy) : bar;
+        mergedBar.items.forEach((barItem: BarItem[]) => {
           const item = barItem[0];
 
           if (!!item.note?.type) {
@@ -84,14 +88,14 @@ export class TabulatureService {
           errors.push({
             rowIndex: rowIndex,
             barIndex: barIndex,
-            errorMessage: `Bar is too short. Suggested note(s) to add: ${this.formatNotesFraction(suggestedNotes)}`
+            errorMessage: this.translocoService.translate('_Error.Bar is too short. Suggested note(s) to add:', {notes: this.formatNotesFraction(suggestedNotes)})
           })
         } else if (difference > 0) {
           const suggestedNotes = this.suggestNotesForError(difference, notes);
           errors.push({
             rowIndex: rowIndex,
             barIndex: barIndex,
-            errorMessage: `Bar is too long. Suggested note(s) to remove: ${this.formatNotesFraction(suggestedNotes)}`
+            errorMessage: this.translocoService.translate('_Error.Bar is too long. Suggested note(s) to remove:', {notes: this.formatNotesFraction(suggestedNotes)})
           })
         }
       })
@@ -434,10 +438,6 @@ export class TabulatureService {
     return suggestedNotes;
   }
 
-  private barHasAddedTimeSignature(bar: Bar) {
-    return bar.items.some(item => item.some(item => item.tabObject?.type === TabObjectType.TimeSignature));
-  }
-
   private formatNotesFraction(notes: number[]) {
     return notes.map(note => `<span><sup>1</sup>/<sub>${note}</sub></span>`).join(', ');
   }
@@ -513,23 +513,14 @@ export class TabulatureService {
 
 
 
-  private mergeDividedBars(rows: Row[]) {
-    const mergedRow: Row[] = [];
-    rows.forEach((row: Row, rowIndex: number) => {
-      if (this.nextRowHasDividedBars(rows[rowIndex + 1])) {
-        const barForMerge = rows[rowIndex + 1].bars.shift();
-        if (!!barForMerge) {
-          row.bars[row.bars.length - 1].items = row.bars[row.bars.length - 1].items.concat(barForMerge.items);
-        }
-        mergedRow.push(row);
-      }
-    })
-
-    return mergedRow;
+  private mergeDividedBars(rows: Row[], bar: Bar) {
+    const barFragments = this.findBarFragments(rows, bar);
+    bar.items = barFragments.flatMap(bar => bar.items);
+    return bar;
   }
 
-  private nextRowHasDividedBars(row?: Row) {
-    return row?.bars?.some(bar => this.isDivided(bar)) ?? false;
+  private findBarFragments(rows: Row[], bar: Bar): Bar[] {
+    return rows.flatMap(row => row.bars.filter(otherBar => bar.id === otherBar.id));
   }
 
 }
