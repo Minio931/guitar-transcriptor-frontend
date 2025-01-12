@@ -4,8 +4,10 @@ import {TimeSignature} from "../types/time-signature.type";
 import {RenderableItem} from "../types/renderable-item.type";
 import {TabInterface} from "../configs/tab-interface.config";
 import {Bar} from "../types/bar.type";
-import {CalculatePositionX} from "../functions/calculate-position-x.function";
 import {Row} from "../types/row.type";
+import {BarItem} from "../types/bar-item.type";
+import {TabObjectType} from "../enums/tab-object-type.enum";
+import {CalculatePositionX} from "../functions/calculate-position-x.function";
 
 
 @Injectable({providedIn: 'root'})
@@ -16,7 +18,7 @@ export class TimeSignatureRenderService {
       return null;
     }
 
-    const x = CalculatePositionX(previousBarsWidth, index, bar);
+    const x = bar.items.find((item: BarItem[]) => item[0]?.tabObject?.type === TabObjectType.TimeSignature)?.[0]?.x ?? CalculatePositionX(previousBarsWidth, index, bar);
     const y = TabInterface.SPACE_BETWEEN_LINES;
 
     return this.generateTimeSignature(x, y, timeSignature);
@@ -46,7 +48,7 @@ export class TimeSignatureRenderService {
       tag: 'image',
       attributes: {
         href: numeratorPath,
-        x: x - (width / 2),
+        x: (x - width) + width / 3,
         y: y + TabInterface.SPACE_BETWEEN_LINES / 4,
         width: width,
         height: height
@@ -55,7 +57,7 @@ export class TimeSignatureRenderService {
       tag: 'image',
       attributes: {
         href: denominatorPath,
-        x: x - (width / 2),
+        x: (x - width) + width / 3,
         y: y1 + TabInterface.SPACE_BETWEEN_LINES / 2,
         width: width,
         height: height
@@ -90,6 +92,7 @@ export class TimeSignatureRenderService {
         return RenderableElements.number11Path;
       case 12:
         return RenderableElements.number12Path;
+
       default:
         return RenderableElements.number1Path;
     }
