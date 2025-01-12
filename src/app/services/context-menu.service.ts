@@ -14,6 +14,7 @@ import {FullLineElement} from "../enums/full-line-element.enum";
 import {
   TimeSignatureService
 } from "../pages/tabulature-editor/_components/time-signature-dialog/time-signature.service";
+import {DeepCopy} from "../functions/deep-copy.function";
 
 
 @Injectable({providedIn: 'root'})
@@ -41,6 +42,11 @@ export class ContextMenuService {
       case TabObjectType.TimeSignature:
         if (option === FullLineElement.TIME_SIGNATURE) {
           this.modifyTimeSignatureForBar();
+        }
+        break;
+      case TabObjectType.Pause:
+        if (this.isNoteEnum(option)) {
+          this.insertPause(option);
         }
         break;
     }
@@ -119,7 +125,7 @@ export class ContextMenuService {
       return 0;
   }
 
-  private createBarItem(note: NoteEnum, xIndex: number, firstBarItem: BarItem, stringNumber: number):BarItem {
+  private createBarItem(note: NoteEnum, xIndex: number, firstBarItem: BarItem, stringNumber: number): BarItem {
     const previousXPosition = firstBarItem.x;
     const noteWidth = GetNoteWidth(note)
     return {
@@ -135,6 +141,35 @@ export class ContextMenuService {
         type: TabObjectType.Note,
       }
     }
+  }
+
+  private insertPause(note: NoteEnum) {
+    if (!this.highlight$) {
+      return;
+    }
+
+    const {rowNumber, columnNumber, barNumber} = this.highlight$;
+
+    const newTabulation = DeepCopy(this.tabulation$);
+
+    newTabulation[rowNumber].bars[barNumber].items[columnNumber] = this.assertPauseInColumn(newTabulation[rowNumber].bars[barNumber], columnNumber, note);
+
+    this.tabulatureService.updateTabulation(newTabulation)
+  }
+
+  private assertPauseInColumn(bar: Bar, columnNumber: number, note: NoteEnum): BarItem[] {
+    return bar.items[columnNumber].map((barItem)=> {
+      return {
+        ...barItem,
+        note: {
+          type: note,
+          width: GetNoteWidth(note)
+        },
+        tabObject: {
+          type: TabObjectType.Pause,
+        }
+      }
+    });
   }
 
 }

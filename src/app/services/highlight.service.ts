@@ -10,6 +10,7 @@ import {TabulatureService} from "./tabulature.service";
 import {CalculateBarValue} from "../functions/calculate-bar-value.function";
 import {TimeSignature} from "../types/time-signature.type";
 import {DeepCopy} from "../functions/deep-copy.function";
+import {TabObjectType} from "../enums/tab-object-type.enum";
 
 
 
@@ -125,6 +126,8 @@ export class HighlightService {
 
     column += summand;
 
+    column = this.validToHighlight(direction, column, barIndex, rowIndex, tabulation);
+
     if (column < 0 || column >= currentRow.bars[barIndex]?.items?.length) {
       bar = currentRow.bars[barIndex + summand] ??
         (tabulation[rowIndex + summand]?.bars[direction === ArrowKeyEnum.ArrowLeft ? tabulation[rowNumber + summand]?.bars.length - 1 : 0] ?? null);
@@ -220,5 +223,19 @@ export class HighlightService {
 
     currentBar.items = currentBar.items.concat(barFragments.flatMap((bar: Bar) => bar.items));
     return currentBar;
+  }
+
+  private validToHighlight(direction: ArrowKey, column: number, barIndex: number, rowIndex: number, tabulation: Row[]): number {
+    const barItem = tabulation[rowIndex].bars[barIndex].items[column] ?? null;
+
+    if (barItem === null) {
+      return column;
+    }
+
+    if (barItem[0]?.tabObject?.type !== TabObjectType.Note && barItem[0]?.tabObject?.type !== TabObjectType.Pause) {
+      return column + (direction === ArrowKeyEnum.ArrowRight ? 1 : -1);
+    }
+
+    return column;
   }
 }
