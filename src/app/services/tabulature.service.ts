@@ -19,6 +19,8 @@ import {GetOneItemPerColumn} from "../functions/get-one-item-per-column.function
 import {GetColumnItemWidthFunction} from "../functions/get-column-item-width.function";
 import {TranslocoService} from "@jsverse/transloco";
 import {DeepCopy} from "../functions/deep-copy.function";
+import {FindEveryBarPartIndexes} from "../functions/find-every-bar-part-indexes.function";
+import {BarPosition} from "../types/bar-position.type";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
@@ -264,7 +266,10 @@ export class TabulatureService {
     if (!!this.highlight$) {
       const {rowNumber, barNumber} = this.highlight$;
       const newTabulation = this.tabulation();
-      newTabulation[rowNumber].bars[barNumber].timeSignature = timeSignature;
+
+      const bar: Bar = newTabulation[rowNumber].bars[barNumber];
+      const barIndexes = FindEveryBarPartIndexes(bar.id, newTabulation);
+      barIndexes.forEach((barPosition: BarPosition) => newTabulation[barPosition.rowIndex].bars[barPosition.barIndex].timeSignature = timeSignature);
       this.updateTabulation(newTabulation);
     }
   }

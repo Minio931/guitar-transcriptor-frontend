@@ -139,10 +139,13 @@ export class TabRenderService {
       return barItems;
     }
 
-    const firstBar = DeepCopy(barItems[0]);
-    firstBar[0].tabObject = {
-      type: TabObjectType.TimeSignature,
-    }
+    const firstBar: BarItem[] = DeepCopy(barItems[0]).map(barItem => ({
+      ...barItem,
+      tabObject: {
+        type: TabObjectType.TimeSignature,
+      }
+    }));
+
     barItems.unshift(firstBar);
 
     return barItems;
@@ -150,10 +153,9 @@ export class TabRenderService {
 
   private timeSignatureAlreadyAdded(barItems: BarItem[][], tabulation: Row[]) {
     const {rowIndex, barIndex} = FindBarPosition(tabulation, barItems);
-    const bars = ExtractBarsToPosition(rowIndex, barIndex, tabulation);
-    const items = bars.flatMap(bar => bar.items);
+    const bar = tabulation[rowIndex].bars[barIndex];
 
-    return items.some(barItem => barItem[0]?.tabObject?.type === TabObjectType.TimeSignature)
+    return bar.items.some((barItem: BarItem[]) => barItem[0]?.tabObject?.type === TabObjectType.TimeSignature);
   }
 
 }
