@@ -73,7 +73,7 @@ export class TabulatureService {
         mergedBar.items.forEach((barItem: BarItem[]) => {
           const item = barItem[0];
 
-          if (!!item.note?.type) {
+          if (!!item.note?.type && (item.tabObject?.type === TabObjectType.Note || item.tabObject?.type === TabObjectType.Pause)) {
             numberOfColumns++;
             barValue += 1/Number(item.note?.type);
             notes.push(Number(item.note?.type));
@@ -153,11 +153,10 @@ export class TabulatureService {
     let tabulation: Row[]  = this.adjustingRows(this.tabulation())
     tabulation = this.tabRenderService.recalculateBarItemsPositions(tabulation);
     tabulation.forEach((row: Row) => {
-      const { tabulationPath, additionalItems } = this.tabRenderService.renderRowPath(row.bars);
+      const { tabulationPath, additionalItems } = this.tabRenderService.renderRowPath(row.bars, tabulation);
       row.path = tabulationPath;
       row.additionalItems = additionalItems;
     });
-
 
     this.tabulation.set(tabulation);
   }
@@ -218,10 +217,28 @@ export class TabulatureService {
     if (!this.highlight$) {
       return;
     }
+
     const {rowNumber, columnNumber, barNumber, stringNumber} = this.highlight$;
-    const tabulation = this.tabulation();
-    delete tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1].tabObject;
-    this.tabulation.set(tabulation);
+    let tabulation = this.tabulation();
+    const bar: Bar = tabulation[rowNumber].bars[barNumber];
+    const column: BarItem[] = tabulation[rowNumber].bars[barNumber].items[columnNumber];
+    const item: BarItem = tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1];
+
+    if (this.isPauseElement(item)) {
+      this.deletePauseElement(tabulation[rowNumber].bars[barNumber].items[columnNumber]);
+    }
+
+    if (this.isNoteElement(item)) {
+      this.deleteNoteElement(item);
+    }
+
+    if (this.isColumnEmpty(column) && this.barHasMoreThanOneItem(bar)) {
+     tabulation = this.deleteColumn(tabulation, this.highlight$);
+    }
+
+    console.log(tabulation);
+    // this.tabulation.set(tabulation);
+    this.updateTabulation(tabulation);
   }
 
 
@@ -293,8 +310,6 @@ export class TabulatureService {
         if (Number(this.fretNumber) > 25) {
           this.fretNumber = fretNumber;
         }
-
-
 
         barItem.tabObject = {
           barNumber,
@@ -511,8 +526,6 @@ export class TabulatureService {
     return currenBars;
   }
 
-
-
   private mergeDividedBars(rows: Row[], bar: Bar) {
     const barFragments = this.findBarFragments(rows, bar);
     bar.items = barFragments.flatMap(bar => bar.items);
@@ -523,4 +536,43 @@ export class TabulatureService {
     return rows.flatMap(row => row.bars.filter(otherBar => bar.id === otherBar.id));
   }
 
+  private isPauseElement(barItem: BarItem): boolean {
+    return barItem.tabObject?.type === TabObjectType.Pause;
+  }
+
+  private isNoteElement(barItem: BarItem): boolean {
+    return barItem.tabObject?.type === TabObjectType.Note;
+  }
+
+  private isColumnEmpty(column: BarItem[]): boolean {
+    return column.every(item => {
+      return item.tabObject?.type === TabObjectType.Note || !!item.tabObject?.fretNumber;
+    });
+  }
+
+  private barHasMoreThanOneItem(bar: Bar): boolean {
+    return bar.items.filter(item => !item.find(item => item.tabObject?.type === TabObjectType.TimeSignature)).length > 1;
+  }
+
+  private deletePauseElement(column: BarItem[]): BarItem[] {
+    return column.map(item => {
+      item.tabObject = {
+        type: TabObjectType.Note
+      }
+      return item;
+    })
+  }
+
+  private deleteNoteElement(barItem: BarItem): BarItem {
+    if (!!barItem.tabObject) {
+      delete barItem.tabObject.fretNumber;
+    }
+
+    return barItem;
+  }
+
+  private deleteColumn(tabulation: Row[], {rowNumber, columnNumber, barNumber}: HighlightPosition): Row[] {
+     tabulation[rowNumber].bars[barNumber].items.splice(columnNumber, 1);
+     return tabulation;
+  }
 }

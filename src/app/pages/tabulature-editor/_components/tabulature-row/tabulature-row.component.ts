@@ -1,6 +1,6 @@
 import {
   Component,
-  computed,
+  computed, effect,
   ElementRef,
   inject,
   input, OnInit, Renderer2,
@@ -92,10 +92,12 @@ export class TabulatureRowComponent implements OnInit{
 
   @ViewChild('rowElement') rowElement!: ElementRef;
 
-  constructor(private renderer: Renderer2, private el: ElementRef) {}
+  constructor(private renderer: Renderer2, private el: ElementRef) {
+    effect(() => this.renderRowAdditionalItems(this.rowAdditionalItems()));
+  }
 
   ngOnInit(): void {
-    this.renderRowAdditionalItems();
+    this.renderRowAdditionalItems(this.rowAdditionalItems());
   }
 
   get highlight(): HighlightPosition | null {
@@ -103,10 +105,15 @@ export class TabulatureRowComponent implements OnInit{
   }
 
 
-  public renderRowAdditionalItems(): void {
+  public renderRowAdditionalItems(additionalItems: RenderableItem[]): void {
     const container = this.el.nativeElement.querySelector('.additionalItemsContainer');
     const svgNS = 'http://www.w3.org/2000/svg';
-    this.rowAdditionalItems().forEach((item: RenderableItem) => {
+
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    additionalItems.forEach((item: RenderableItem) => {
       const imageElement = document.createElementNS(svgNS, item.tag);
       Object.entries(item.attributes).forEach(([key, value]) => {
         imageElement.setAttribute(key, value.toString());

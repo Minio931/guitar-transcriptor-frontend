@@ -10,6 +10,8 @@ export function GetColumnItemWidthFunction(type?: TabObjectType, note?: NoteEnum
       return GetNoteWidth(note!);
     case TabObjectType.TimeSignature:
       return TabInterface.timeSignatureLength;
+    case TabObjectType.Pause:
+      return GetNoteWidth(note!);
     default:
       return 0;
   }

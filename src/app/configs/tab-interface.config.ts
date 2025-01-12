@@ -24,4 +24,6 @@ export class TabInterface {
   static readonly durationSixtyFourLength: number = this.durationThirtyTwoLength / 2;
 
   static readonly timeSignatureLength: number = 100;
+
+  static readonly PAUSE_LENGTH: number = 35;
 }

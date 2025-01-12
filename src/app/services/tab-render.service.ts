@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {Bar} from "../types/bar.type";
 import {BarItem} from "../types/bar-item.type";
 import {TabObjectType} from "../enums/tab-object-type.enum";
@@ -9,10 +9,21 @@ import {TimeSignature} from "../types/time-signature.type";
 import {RenderableElements} from "../configs/renderable-elements.config";
 import {RenderableItem} from "../types/renderable-item.type";
 import {GetOneItemPerColumn} from "../functions/get-one-item-per-column.function";
+import {TimeSignatureRenderService} from "./time-signature-render.service";
+import {CalculatePositionX} from "../functions/calculate-position-x.function";
+import {DeepCopy} from "../functions/deep-copy.function";
+import {FindBarPosition} from "../functions/find-bar-position.function";
+import {ExtractBarsToPosition} from "../functions/extract-bars-to-position.function";
+import {PauseRenderService} from "./pause-render.service";
 
 
 @Injectable({providedIn: "root"})
 export class TabRenderService {
+
+  timeSignatureRenderService: TimeSignatureRenderService = inject(TimeSignatureRenderService);
+  pauseRenderService: PauseRenderService = inject(PauseRenderService);
+
+
   public recalculateBarItemsPositions(tabulation: Row[]) {
     return tabulation.map(row => {
       return {
@@ -21,10 +32,10 @@ export class TabRenderService {
           const previousBarsWidth = this.previousBarsWidth(barIndex, row.bars);
           return {
             ...bar,
-            items: bar.items.map((column, columnIndex) => {
+            items: this.insertTimeSignature(bar.items, tabulation, this.timeSignatureRenderService.timeSignatureHasChanged(barIndex, row.bars, bar.timeSignature, tabulation)).map((column, columnIndex) => {
               return column.map(item => ({
                 ...item,
-                x: this.calculatePositionX(previousBarsWidth, columnIndex, bar),
+                x: CalculatePositionX(previousBarsWidth, columnIndex, bar),
               }));
             }),
           };
@@ -49,7 +60,7 @@ export class TabRenderService {
     bar.items.forEach(barItem => {
       let widthToAdd = 0;
       barItem.forEach(item => {
-        widthToAdd = this.getBarColumnWidth(item, bar.timeSignature.denominator)
+        widthToAdd = GetColumnItemWidthFunction(item?.tabObject?.type, item?.note?.type);
       })
       barWidth += widthToAdd;
     })
@@ -57,7 +68,7 @@ export class TabRenderService {
     return barWidth + TabInterface.PADDING;
   }
 
-  public renderRowPath(bars: Bar[]){
+  public renderRowPath(bars: Bar[], tabulation: Row[]){
     let tabulationPath: string[] = [];
     let additionalItems: RenderableItem[] = [];
     let rowWidth = 0;
@@ -71,16 +82,7 @@ export class TabRenderService {
       const v: number = TabInterface.NUMBER_OF_LINES * TabInterface.SPACE_BETWEEN_LINES;
       tabulationPath.push(this.generateBar(x, y, v, currBarWidth));
 
-      const barItems = GetOneItemPerColumn(bar.items);
-
-      barItems.forEach(barItem => {
-        const x = this.calculatePositionX(beforeBarsWidth, index, bar);
-        const y = TabInterface.SPACE_BETWEEN_LINES;
-        if (barItem.tabObject?.type === TabObjectType.TimeSignature) {
-          additionalItems.push(...this.generateTimeSignature(x, y, bar.timeSignature!));
-        }
-      })
-
+      additionalItems.push(...this.renderAdditionalItems(bar, index, bars, beforeBarsWidth, tabulation));
     })
 
     return {
@@ -97,6 +99,21 @@ export class TabRenderService {
     }
   }
 
+  private renderAdditionalItems(bar: Bar, index: number, bars: Bar[], previousBarsWidth: number, tabulation: Row[]) {
+    const elementsForBar: RenderableItem[] = [];
+
+    if (bar.timeSignature) {
+      const timeSignatureElement = this.timeSignatureRenderService.renderTimeSignature(bar, index, bars, bar.timeSignature, previousBarsWidth, tabulation);
+      timeSignatureElement && elementsForBar.push(...timeSignatureElement);
+    }
+
+    const pauseElements: RenderableItem[] = this.pauseRenderService.renderPauseElements(bar, index, bars, previousBarsWidth);
+    pauseElements && elementsForBar.push(...pauseElements);
+
+
+    return elementsForBar;
+  }
+
   private generateTabLine(x: number, y: number, h: number): string {
     return `M ${x} ${y} H ${h}`;
   }
@@ -105,95 +122,6 @@ export class TabRenderService {
     return `M ${x} ${y} V ${v}`;
   }
 
-  private generateTimeSignature(x: number, y: number, timeSignature: TimeSignature): RenderableItem[] {
-    const numeratorPath = this.getTimeSignaturePath(timeSignature.numerator);
-    const denominatorPath = this.getTimeSignaturePath(timeSignature.denominator);
-    const width = TabInterface.timeSignatureLength;
-    const height = TabInterface.SPACE_BETWEEN_LINES * 2;
-    const y1 = y + height;
-
-    return [{
-      tag: 'image',
-      attributes: {
-        href: numeratorPath,
-        x: x - (width / 2),
-        y: y + TabInterface.SPACE_BETWEEN_LINES / 4,
-        width: width,
-        height: height
-      }
-    }, {
-      tag: 'image',
-      attributes: {
-        href: denominatorPath,
-        x: x - (width / 2),
-        y: y1 + TabInterface.SPACE_BETWEEN_LINES / 2,
-        width: width,
-        height: height
-      }
-    }];
-  }
-
-  private getBarColumnWidth (barItem: BarItem, denominator: number): number {
-    switch (barItem.tabObject?.type) {
-      case TabObjectType.TimeSignature:
-        return TabInterface.timeSignatureLength;
-      case TabObjectType.Note:
-        return barItem!.note!.width;
-      default:
-        return this.getLengthOfNote(denominator);
-    }
-  }
-
-  private getLengthOfNote(denominator: number): number {
-    return denominator === 1 ? TabInterface.durationOneLength :
-      denominator === 2 ? TabInterface.durationTwoLength :
-        denominator === 4 ? TabInterface.durationFourLength :
-          denominator === 8 ? TabInterface.durationEightLength :
-            denominator === 16 ? TabInterface.durationSixteenLength : TabInterface.durationThirtyTwoLength;
-  }
-
-  private calculatePositionX(previousBarsWidth: number, columnIndex: number, bar: Bar): number {
-    const itemsBefore = bar.items.slice(0, columnIndex);
-
-    const widthItemsBefore = GetOneItemPerColumn(itemsBefore).reduce((acc, curr) => {
-      const width = GetColumnItemWidthFunction(curr?.tabObject?.type, curr?.note?.type);
-      return acc + width;
-    }, 0);
-
-    return TabInterface.PADDING + previousBarsWidth + widthItemsBefore;
-  }
-
-
-  private getTimeSignaturePath(number: number) {
-    switch (number) {
-      case 1:
-        return RenderableElements.number1Path;
-      case 2:
-        return RenderableElements.number2Path;
-      case 3:
-        return RenderableElements.number3Path;
-      case 4:
-        return RenderableElements.number4Path;
-      case 5:
-        return RenderableElements.number5Path;
-      case 6:
-        return RenderableElements.number6Path;
-      case 7:
-        return RenderableElements.number7Path;
-      case 8:
-        return RenderableElements.number8Path;
-      case 9:
-        return RenderableElements.number9Path;
-      case 10:
-        return RenderableElements.number10Path;
-      case 11:
-        return RenderableElements.number11Path;
-      case 12:
-        return RenderableElements.number12Path;
-      default:
-        return RenderableElements.number1Path;
-    }
-  }
 
   public previousBarsWidth(index: number, bars: Bar[]) {
     const barsBeforeCurrent = bars.slice(0, index);
@@ -201,4 +129,31 @@ export class TabRenderService {
       return acc + this.calculateLengthOfBar(curr);
     }, 0)
   }
+
+  private insertTimeSignature(barItems: BarItem[][], tabulation: Row[], timeSignatureChanged: boolean) {
+    if (!timeSignatureChanged) {
+      return barItems;
+    }
+
+    if (this.timeSignatureAlreadyAdded(barItems, tabulation)) {
+      return barItems;
+    }
+
+    const firstBar = DeepCopy(barItems[0]);
+    firstBar[0].tabObject = {
+      type: TabObjectType.TimeSignature,
+    }
+    barItems.unshift(firstBar);
+
+    return barItems;
+  }
+
+  private timeSignatureAlreadyAdded(barItems: BarItem[][], tabulation: Row[]) {
+    const {rowIndex, barIndex} = FindBarPosition(tabulation, barItems);
+    const bars = ExtractBarsToPosition(rowIndex, barIndex, tabulation);
+    const items = bars.flatMap(bar => bar.items);
+
+    return items.some(barItem => barItem[0]?.tabObject?.type === TabObjectType.TimeSignature)
+  }
+
 }
