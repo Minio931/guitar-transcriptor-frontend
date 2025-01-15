@@ -20,6 +20,7 @@ import {BarError} from "../../types/bar-error.type";
 import {NgTemplateOutlet} from "@angular/common";
 import {TimeSignatureDialogComponent} from "./_components/time-signature-dialog/time-signature-dialog.component";
 import {TimeSignatureService} from "./_components/time-signature-dialog/time-signature.service";
+import {TabPlayerComponent} from "./_components/tab-player/tab-player.component";
 
 
 @Component({
@@ -29,6 +30,7 @@ import {TimeSignatureService} from "./_components/time-signature-dialog/time-sig
     TabulatureRowComponent,
     NgTemplateOutlet,
     TimeSignatureDialogComponent,
+    TabPlayerComponent,
   ],
   templateUrl: "./tabulature-editor.component.html",
   styleUrl: "./tabulature-editor.component.scss",
