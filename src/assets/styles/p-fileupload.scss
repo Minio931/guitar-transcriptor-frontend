@@ -3,5 +3,8 @@
     .p-progressbar {
       display: none;
     }
+    .p-progressbar-show {
+      display: flex !important;
+    }
   }
 }

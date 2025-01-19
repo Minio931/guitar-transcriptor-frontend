@@ -21,6 +21,7 @@ import {NgTemplateOutlet} from "@angular/common";
 import {TimeSignatureDialogComponent} from "./_components/time-signature-dialog/time-signature-dialog.component";
 import {TimeSignatureService} from "./_components/time-signature-dialog/time-signature.service";
 import {TabPlayerComponent} from "./_components/tab-player/tab-player.component";
+import {Toast} from "primeng/toast";
 
 
 @Component({
@@ -31,6 +32,7 @@ import {TabPlayerComponent} from "./_components/tab-player/tab-player.component"
     NgTemplateOutlet,
     TimeSignatureDialogComponent,
     TabPlayerComponent,
+    Toast,
   ],
   templateUrl: "./tabulature-editor.component.html",
   styleUrl: "./tabulature-editor.component.scss",

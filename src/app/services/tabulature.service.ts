@@ -21,6 +21,9 @@ import {TranslocoService} from "@jsverse/transloco";
 import {DeepCopy} from "../functions/deep-copy.function";
 import {FindEveryBarPartIndexes} from "../functions/find-every-bar-part-indexes.function";
 import {BarPosition} from "../types/bar-position.type";
+import {Transcript} from "../models/transcript.model";
+import {BarResponse} from "../interfaces/transcribe-response.interface";
+import {ConvertResponseDurationToEnum} from "../functions/convert-response-duration-to-enum.function";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
 const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
@@ -274,8 +277,62 @@ export class TabulatureService {
     }
   }
 
+  public loadTranscription(transcript: Transcript) {
+      const { bars, timeSignature } = transcript;
+
+      if (bars && timeSignature) {
+        const transcribedTabulation = this.convertToTabulation(bars, timeSignature);
+        this.updateTabulation(transcribedTabulation);
+      }
+  }
+
   public isDivided( bar: Bar) {
     return bar?.divided ?? false;
+  }
+
+  private convertToTabulation(bars: BarResponse[][], timeSignature: TimeSignature): Row[] {
+    const tabulation: Row[] = [];
+      const transcribedTabulation = this.convertBars(bars, timeSignature);
+      tabulation.push({
+        id: 1,
+        bars: transcribedTabulation,
+        path: '',
+      })
+
+    return tabulation;
+  }
+
+  private convertBars(bars: BarResponse[][], timeSignature: TimeSignature): Bar[] {
+    return bars.map((bar: BarResponse[], index: number) => {
+      return {
+        id: index + 1,
+        row: index,
+        items: bar.map((item: BarResponse) => this.convertBarItem(item, timeSignature)),
+        timeSignature,
+        tempo: 120,
+        repeatStarts: false,
+        repeatEnds: false,
+        divided: false
+      }
+    });
+  }
+
+  private convertBarItem(item: BarResponse, timeSignature: TimeSignature): BarItem[] {
+    return [{
+      x: 0,
+      y: (TabInterface.SPACE_BETWEEN_LINES * item.string),
+      tabObject: {
+        type: TabObjectType.Note,
+        fretNumber: item.fret,
+        positionX: item.string,
+        stringNumber: item.string,
+      },
+      note: {
+        type: ConvertResponseDurationToEnum(item.duration_name),
+        width: GetNoteWidth(ConvertResponseDurationToEnum(item.duration_name)),
+      },
+      stringNumber: item.string,
+    }]
   }
 
   private isItemValidToInsert(fretNumber: string): boolean {

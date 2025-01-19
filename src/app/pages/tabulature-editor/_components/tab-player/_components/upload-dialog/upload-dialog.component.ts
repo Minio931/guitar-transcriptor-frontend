@@ -8,6 +8,7 @@ import {ProgressBar} from "primeng/progressbar";
 import {Badge} from "primeng/badge";
 import {TranslocoPipe} from "@jsverse/transloco";
 import {Ripple} from "primeng/ripple";
+import {FileSizePipe} from "../../../../../../pipes/file-size.pipe";
 
 @Component({
   selector: 'app-upload-dialog',
@@ -21,7 +22,8 @@ import {Ripple} from "primeng/ripple";
     Badge,
     TranslocoPipe,
     ButtonDirective,
-    Ripple
+    Ripple,
+    FileSizePipe
   ],
   templateUrl: './upload-dialog.component.html',
   styleUrl: './upload-dialog.component.scss'
@@ -38,7 +40,7 @@ export class UploadDialogComponent {
   }
 
   get files(): File[] {
-    return this.uploadDialogService.files();
+    return this.uploadDialogService.files() ?? [];
   }
 
   set files(files: File[]) {
@@ -49,8 +51,8 @@ export class UploadDialogComponent {
     return this.uploadDialogService.loading();
   }
 
-  set loading(value: boolean) {
-    this.uploadDialogService.loading.set(value);
+  get transcribedFiles(): boolean {
+    return this.uploadDialogService.filesTranscribed();
   }
 
   transcribeEvent() {
@@ -59,5 +61,9 @@ export class UploadDialogComponent {
 
   onSelectedFile(event: any) {
     this.files = event.currentFiles
+  }
+
+  onLoadTranscription() {
+    this.uploadDialogService.loadTranscription();
   }
 }

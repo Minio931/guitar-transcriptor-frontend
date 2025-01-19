@@ -20,7 +20,16 @@
     "Upload": "Prześlij",
     "Download": "Pobierz",
     "Pending": "Oczekujący",
+    "Transcribed": "Przetworzone",
+    "Load": "Załaduj",
     "Drag and drop files to here to upload": "Przeciągnij i upuść pliki tutaj, aby przesłać.",
-    "Available formats:": "Dostępne formaty:"
+    "Available formats:": "Dostępne formaty:",
+    "Transcribed Files": "Przetworzone pliki",
+    "We are transcribing your file": "Przetwarzamy plik"
+  },
+
+  "_Notification": {
+    "Successfully transcribed file": "Plik przetworzony pomyślnie",
+    "Error while transcribing file": "Błąd podczas przetwarzania pliku"
   }
 }

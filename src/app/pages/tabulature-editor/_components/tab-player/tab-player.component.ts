@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Button} from "primeng/button";
 import {TranslocoPipe} from "@jsverse/transloco";
 import {Tooltip} from "primeng/tooltip";
 import {UploadDialogComponent} from "./_components/upload-dialog/upload-dialog.component";
+import {UploadDialogService} from "./_components/upload-dialog/upload-dialog.service";
 
 @Component({
   selector: 'app-tab-player',
@@ -17,5 +18,9 @@ import {UploadDialogComponent} from "./_components/upload-dialog/upload-dialog.c
   styleUrl: './tab-player.component.scss'
 })
 export class TabPlayerComponent {
+  uploadDialogService = inject(UploadDialogService);
 
+  openUploadDialog(): void {
+    this.uploadDialogService.openUploadDialog();
+  }
 }

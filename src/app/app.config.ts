@@ -9,6 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslocoHttpLoader } from './transloco-loader';
 import { provideTransloco } from '@jsverse/transloco';
 import {definePreset} from "@primeng/themes";
+import {MessageService} from "primeng/api";
 
 const customPreset = definePreset(Aura, {
   semantic: {
@@ -29,6 +30,7 @@ const customPreset = definePreset(Aura, {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    MessageService,
     provideExperimentalZonelessChangeDetection(),
     provideRouter(routes),
     provideAnimationsAsync(),

@@ -14,6 +14,7 @@
       [customUpload]="true"
       accept=".wav"
       maxFileSize="5000000"
+      styleClass="file-upload"
       (onSelect)="onSelectedFile($event)"
       >
        <ng-template
@@ -41,17 +42,16 @@
        </ng-template>
 
         <ng-template #content
-             let-files
-             let-uploadedFiles="uploadedFiles"
              let-removeFileCallback="removeFileCallback"
-             let-removeUploadedFileCallback="removeUploadedFileCallback"
-             let-uploadCallback="uploadCallback"
               >
-          @if (files?.length > 0) {
+          @if (files.length > 0) {
             <div class="file-upload-pending">
               @if (loading) {
                 <div class="loading-overlay">
-                  Loading...
+                  <p>{{'_Player.We are transcribing your file' | transloco}}</p>
+                  <div class="loading-overlay__content">
+                    <p-progress-bar mode="indeterminate" color="primary" styleClass="p-progressbar-show" [style]="{ height: '6px', width: '100%' }" ></p-progress-bar>
+                  </div>
                 </div>
               }
               <div class="file-upload-pending__list">
@@ -62,38 +62,47 @@
                     </div>
                     <div class="file-upload-pending__item__details">
                       <span class="file-upload-pending__item__name">{{file.name}}</span>
-                      <span class="file-upload-pending__item__size">{{file.size}}</span>
+                      <span class="file-upload-pending__item__size">{{file.size | fileSize: 2}}</span>
                     </div>
                     <div class="file-upload-pending__item__actions">
-                      <p-badge value="{{'_Player.Pending' | transloco}}" severity="info"></p-badge>
-                      <button
-                        class="file-upload-pending__item__transcribe"
-                        pButton
-                        pRipple
-                        severity="success"
-                        [rounded]="true"
-                        [outlined]="true"
-                        type="button"
-                        (click)="transcribeEvent()"
-                      >
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-writing"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2z" /><path d="M16 7h4" /><path d="M18 19h-13a2 2 0 1 1 0 -4h4a2 2 0 1 0 0 -4h-3" /></svg>
-                      </button>
-                      <p-button
-                        icon="pi pi-trash"
-                        [rounded]="true"
-                        [outlined]="true"
-                        severity="danger"
-                        (click)="removeFileCallback(file)"
-                      ></p-button>
+                      @if (!transcribedFiles)
+                      {
+                        <p-badge value="{{'_Player.Pending' | transloco}}" severity="info"></p-badge>
+                        <button
+                          class="file-upload-pending__item__transcribe"
+                          pButton
+                          pRipple
+                          severity="success"
+                          [rounded]="true"
+                          [outlined]="true"
+                          type="button"
+                          (click)="transcribeEvent()"
+                        >
+                          <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-writing"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2z" /><path d="M16 7h4" /><path d="M18 19h-13a2 2 0 1 1 0 -4h4a2 2 0 1 0 0 -4h-3" /></svg>
+                        </button>
+                        <p-button
+                          icon="pi pi-trash"
+                          [rounded]="true"
+                          [outlined]="true"
+                          severity="danger"
+                          (click)="removeFileCallback(file)"
+                        ></p-button>
+                      } @else {
+                        <p-badge value="{{'_Player.Transcribed' | transloco}}" severity="success"></p-badge>
+                        <p-button
+                          [outlined]="true"
+                          [raised]="true"
+                          severity="contrast"
+                          (click)="onLoadTranscription()"
+                        >
+                          {{'_Player.Load' | transloco}}
+                          <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-guitar-pick"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2c-1.613 0 -2.882 .104 -3.825 .323l-.23 .057c-3.019 .708 -4.945 2.503 -4.945 5.62c0 3.367 1.939 8.274 4.22 11.125c.32 .4 .664 .786 1.03 1.158l.367 .36a4.904 4.904 0 0 0 6.752 .011a15.04 15.04 0 0 0 1.41 -1.528c2.491 -3.113 4.221 -7.294 4.221 -11.126c0 -3.025 -1.813 -4.806 -4.71 -5.562l-.266 -.066c-.936 -.25 -2.281 -.372 -4.024 -.372z" /></svg>
+                        </p-button>
+                      }
                     </div>
                   </div>
                 }
               </div>
-            </div>
-          }
-          @if (uploadedFiles?.length > 0) {
-            <div class="file-upload-uploaded">
-              <h3 class="file-upload-uploaded__title">{{'_Player.Uploaded files' | transloco}}</h3>
             </div>
           }
         </ng-template>
