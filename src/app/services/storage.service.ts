@@ -1,4 +1,5 @@
 import {Injectable} from "@angular/core";
+import {Row} from "../types/row.type";
 
 const LANGUAGE_KEY = 'language';
 
@@ -15,6 +16,20 @@ export class StorageService {
 
   removeLanguage(): void {
     this.deleteItem(LANGUAGE_KEY);
+  }
+
+  getTabulature(): Row[] | null {
+    const tabulation = this.getItem('tabulation');
+    return tabulation ? JSON.parse(tabulation) : null;
+  }
+
+  saveTabulature(tabulation: Row[]): void {
+    console.log(tabulation);
+    this.setItem('tabulation', JSON.stringify(tabulation));
+  }
+
+  removeTabulature(tabulation: Row[]): void {
+    this.deleteItem('tabulation');
   }
 
 

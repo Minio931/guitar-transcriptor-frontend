@@ -26,7 +26,7 @@ import {BarResponse} from "../interfaces/transcribe-response.interface";
 import {ConvertResponseDurationToEnum} from "../functions/convert-response-duration-to-enum.function";
 
 const INITIAL_SPACE_BETWEEN_ITEMS: number = 70;
-const INITIAL_GUITAR_TUNING = ["E", "A", "D", "G", "B", "E"];
+const INITIAL_GUITAR_TUNING = ["E2", "A2", "D3", "G3", "B3", "E4"];
 const INITIAL_TIME_SIGNATURE: TimeSignature = {
   numerator: 4,
   denominator: 4
@@ -302,6 +302,7 @@ export class TabulatureService {
     return tabulation;
   }
 
+
   private convertBars(bars: BarResponse[][], timeSignature: TimeSignature): Bar[] {
     return bars.map((bar: BarResponse[], index: number) => {
       return {
@@ -318,21 +319,41 @@ export class TabulatureService {
   }
 
   private convertBarItem(item: BarResponse, timeSignature: TimeSignature): BarItem[] {
-    return [{
-      x: 0,
-      y: (TabInterface.SPACE_BETWEEN_LINES * item.string),
-      tabObject: {
-        type: TabObjectType.Note,
-        fretNumber: item.fret,
-        positionX: item.string,
-        stringNumber: item.string,
-      },
-      note: {
-        type: ConvertResponseDurationToEnum(item.duration_name),
-        width: GetNoteWidth(ConvertResponseDurationToEnum(item.duration_name)),
-      },
-      stringNumber: item.string,
-    }]
+    const column: BarItem[] = [];
+    for (let i = 0; i < TabInterface.NUMBER_OF_LINES; i++) {
+      if (item.string === i + 1) {
+        column[i] = {
+          x: 0,
+          y: (TabInterface.SPACE_BETWEEN_LINES * item.string),
+          tabObject: {
+            type: TabObjectType.Note,
+            fretNumber: item.fret,
+            positionX: item.string,
+            stringNumber: item.string,
+          },
+          note: {
+            type: ConvertResponseDurationToEnum(item.duration_name),
+            width: GetNoteWidth(ConvertResponseDurationToEnum(item.duration_name)),
+          },
+          stringNumber: item.string,
+        }
+      } else {
+        column[i] = {
+          x: 0,
+          y: (TabInterface.SPACE_BETWEEN_LINES * (i + 1)),
+          tabObject: {
+            type: TabObjectType.Note,
+            stringNumber: i + 1,
+          },
+          note: {
+            type: ConvertResponseDurationToEnum(item.duration_name),
+            width: GetNoteWidth(ConvertResponseDurationToEnum(item.duration_name)),
+          },
+          stringNumber: i + 1,
+        }
+      }
+    }
+   return column;
   }
 
   private isItemValidToInsert(fretNumber: string): boolean {

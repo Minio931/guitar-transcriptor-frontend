@@ -25,7 +25,8 @@
     "Drag and drop files to here to upload": "Przeciągnij i upuść pliki tutaj, aby przesłać.",
     "Available formats:": "Dostępne formaty:",
     "Transcribed Files": "Przetworzone pliki",
-    "We are transcribing your file": "Przetwarzamy plik"
+    "We are transcribing your file": "Przetwarzamy plik",
+    "Couldn't find tabulation for export": "Nie można znaleźć tabulacji do eksportu"
   },
 
   "_Notification": {

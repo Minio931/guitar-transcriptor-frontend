@@ -4,14 +4,14 @@ import {HighlightService} from "../../services/highlight.service";
 import {TabulatureService} from "../../services/tabulature.service";
 import {HighlightPosition} from "../../types/highlight-position.type";
 import {Row} from "../../types/row.type";
+import {StorageService} from "../../services/storage.service";
 
 
 @Injectable({providedIn: 'root'})
 export class TabulatureEditorService {
 
-    highlightService = inject(HighlightService);
     tabulatureService = inject(TabulatureService);
-    timeSignatureDialogVisible = signal<boolean>(false);
+    storageService = inject(StorageService);
 
     public get highlight$(): HighlightPosition | null{
       return this.tabulatureService.highlight$;
@@ -21,20 +21,14 @@ export class TabulatureEditorService {
         return this.tabulatureService.tabulation();
     }
 
-  setTimeSignature(timeSignature: TimeSignature) {
-    const newTabulation = this.tabulation$;
-    console.log('Before setting time signature:', {
-      highlight: this.highlight$,
-      tabulation: newTabulation,
-    });
-
-    if (!!this.highlight$) {
-      const {rowNumber, barNumber} = this.highlight$;
-      const newRow = newTabulation[rowNumber];
-      newRow.bars[barNumber].timeSignature = timeSignature;
-      this.tabulatureService.updateTabulation(newTabulation);
-
-      console.log('Updated tabulation:', newTabulation);
+    saveTabulature(tabulation: Row[]) {
+      this.storageService.saveTabulature(tabulation);
     }
-  }
+
+    getTabulature(): Row[] | null {
+      return this.storageService.getTabulature();
+    }
+
+
+
 }

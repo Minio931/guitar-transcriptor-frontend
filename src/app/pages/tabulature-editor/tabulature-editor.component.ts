@@ -1,7 +1,7 @@
 import {
   AfterViewInit,
   ChangeDetectorRef,
-  Component,
+  Component, effect,
   ElementRef,
   HostListener,
   inject,
@@ -22,6 +22,7 @@ import {TimeSignatureDialogComponent} from "./_components/time-signature-dialog/
 import {TimeSignatureService} from "./_components/time-signature-dialog/time-signature.service";
 import {TabPlayerComponent} from "./_components/tab-player/tab-player.component";
 import {Toast} from "primeng/toast";
+import {TabulatureEditorService} from "./tabulature-editor.service";
 
 
 @Component({
@@ -39,6 +40,10 @@ import {Toast} from "primeng/toast";
   encapsulation: ViewEncapsulation.None
 })
 export class TabulatureEditorComponent implements AfterViewInit{
+
+  tabulatureService: TabulatureService = inject(TabulatureService);
+  tabulatureEditorService: TabulatureEditorService = inject(TabulatureEditorService);
+
   protected readonly TabInterface = TabInterface
   readonly width = signal<string>("100%");
   readonly height = signal<string>("200px");
@@ -63,11 +68,12 @@ export class TabulatureEditorComponent implements AfterViewInit{
     return this.tabulatureService.barErrors();
   }
 
-  tabulatureService: TabulatureService = inject(TabulatureService);
 
   @ViewChild("rowsContainer") staffElement!: ElementRef;
 
-  constructor(private changeDetectionRef: ChangeDetectorRef) {}
+  constructor(private changeDetectionRef: ChangeDetectorRef) {
+    effect(() => this.tabulatureEditorService.saveTabulature(this.tabulatureService.tabulation()));
+  }
 
   ngAfterViewInit() {
     this.initializeTabulature();
@@ -94,8 +100,12 @@ export class TabulatureEditorComponent implements AfterViewInit{
 
   private initializeTabulature() {
     this.containerWidth = this.staffElement.nativeElement.offsetWidth;
+    const tabulature = this.tabulatureEditorService.getTabulature();
     this.tabulatureService.initializeBars();
     this.tabulatureService.renderBars();
+    if (!!tabulature) {
+      this.tabulatureService.updateTabulation(tabulature);
+    }
     this.changeDetectionRef.detectChanges();
   }
 

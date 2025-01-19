@@ -4,6 +4,8 @@ import {TranslocoPipe} from "@jsverse/transloco";
 import {Tooltip} from "primeng/tooltip";
 import {UploadDialogComponent} from "./_components/upload-dialog/upload-dialog.component";
 import {UploadDialogService} from "./_components/upload-dialog/upload-dialog.service";
+import {TabPlayerService} from "./tab-player.service";
+import {PlaybackService} from "../../../../services/playback.service";
 
 @Component({
   selector: 'app-tab-player',
@@ -19,8 +21,18 @@ import {UploadDialogService} from "./_components/upload-dialog/upload-dialog.ser
 })
 export class TabPlayerComponent {
   uploadDialogService = inject(UploadDialogService);
+  tabPlayerService: TabPlayerService = inject(TabPlayerService);
+  playbackService: PlaybackService = inject(PlaybackService);
 
   openUploadDialog(): void {
     this.uploadDialogService.openUploadDialog();
+  }
+
+  exportTabulature() : void {
+    this.tabPlayerService.exportToPdf();
+  }
+
+  playTabulature(): void {
+    this.playbackService.playTabulature();
   }
 }
