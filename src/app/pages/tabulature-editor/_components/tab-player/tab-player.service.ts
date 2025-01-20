@@ -26,7 +26,6 @@ export class TabPlayerService {
     const doc = new jsPDF('l', 'px', [clientWidth, A4_FORMAT_HEIGHT]);
 
     let currentY = TAB_START_Y;
-    console.log(clientWidth);
 
     this.tabulatureService.tabulation().forEach((row: Row) => {
       row.bars.forEach((bar: Bar, index: number) => {

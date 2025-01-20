@@ -6,6 +6,7 @@ import {UploadDialogComponent} from "./_components/upload-dialog/upload-dialog.c
 import {UploadDialogService} from "./_components/upload-dialog/upload-dialog.service";
 import {TabPlayerService} from "./tab-player.service";
 import {PlaybackService} from "../../../../services/playback.service";
+import {TabulatureService} from "../../../../services/tabulature.service";
 
 @Component({
   selector: 'app-tab-player',
@@ -23,6 +24,7 @@ export class TabPlayerComponent {
   uploadDialogService = inject(UploadDialogService);
   tabPlayerService: TabPlayerService = inject(TabPlayerService);
   playbackService: PlaybackService = inject(PlaybackService);
+  tabulatureService: TabulatureService = inject(TabulatureService);
 
   openUploadDialog(): void {
     this.uploadDialogService.openUploadDialog();
@@ -34,5 +36,13 @@ export class TabPlayerComponent {
 
   playTabulature(): void {
     this.playbackService.playTabulature();
+  }
+
+  stopTabulature(): void {
+    this.playbackService.stopPlayback();
+  }
+
+  resetTabulature(): void {
+    this.tabulatureService.cleanTabulation();
   }
 }

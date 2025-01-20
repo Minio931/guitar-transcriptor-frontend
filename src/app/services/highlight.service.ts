@@ -92,6 +92,7 @@ export class HighlightService {
         break;
     }
 
+    console.log(newHighlight);
     return newHighlight;
   }
 

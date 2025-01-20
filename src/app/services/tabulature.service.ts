@@ -47,7 +47,7 @@ export class TabulatureService {
 
   spaceBetweenItems = signal<number>(INITIAL_SPACE_BETWEEN_ITEMS);
 
-  activeGuitarTuning = signal<string[]>(INITIAL_GUITAR_TUNING);
+  activeGuitarTuning = signal<string[]>(INITIAL_GUITAR_TUNING.reverse());
 
   tabulation = signal<Row[]>([]);
 
@@ -118,6 +118,13 @@ export class TabulatureService {
 
   public get highlight$(): HighlightPosition | null {
     return this.highlightService.highlight;
+  }
+
+
+  public cleanTabulation(): void {
+    this.tabulation.set([]);
+    this.initializeBars();
+    window.location.reload();
   }
 
   public initializeBars() {
@@ -229,6 +236,11 @@ export class TabulatureService {
     const column: BarItem[] = tabulation[rowNumber].bars[barNumber].items[columnNumber];
     const item: BarItem = tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1];
 
+
+    if (this.isColumnEmpty(column) ) {
+      tabulation = this.deleteColumn(tabulation, this.highlight$);
+    }
+
     if (this.isPauseElement(item)) {
       this.deletePauseElement(tabulation[rowNumber].bars[barNumber].items[columnNumber]);
     }
@@ -237,12 +249,6 @@ export class TabulatureService {
       this.deleteNoteElement(item);
     }
 
-    if (this.isColumnEmpty(column) && this.barHasMoreThanOneItem(bar)) {
-     tabulation = this.deleteColumn(tabulation, this.highlight$);
-    }
-
-    console.log(tabulation);
-    // this.tabulation.set(tabulation);
     this.updateTabulation(tabulation);
   }
 
@@ -383,6 +389,11 @@ export class TabulatureService {
 
         const bar = tabulation[rowNumber].bars[barNumber];
         const barItem: BarItem = tabulation[rowNumber].bars[barNumber].items[columnNumber][stringNumber - 1];
+
+        if (barItem.tabObject?.type === TabObjectType.Pause) {
+          this.deletePauseElement(tabulation[rowNumber].bars[barNumber].items[columnNumber]);
+          this.updateTabulation(tabulation);
+        }
 
         this.fretNumber += fretNumber;
 
@@ -629,12 +640,12 @@ export class TabulatureService {
 
   private isColumnEmpty(column: BarItem[]): boolean {
     return column.every(item => {
-      return item.tabObject?.type === TabObjectType.Note || !!item.tabObject?.fretNumber;
+      return item.tabObject?.type === TabObjectType.Note && item.tabObject?.fretNumber === undefined;
     });
   }
 
   private barHasMoreThanOneItem(bar: Bar): boolean {
-    return bar.items.filter(item => !item.find(item => item.tabObject?.type === TabObjectType.TimeSignature)).length > 1;
+    return bar.items.filter(item => !item.find(item => item.tabObject?.type === TabObjectType.TimeSignature)).length >= 1;
   }
 
   private deletePauseElement(column: BarItem[]): BarItem[] {

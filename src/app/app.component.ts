@@ -12,7 +12,7 @@ import {LanguageService} from "./services/language.service";
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'guitar-transcriptor';
+  title = 'samples-transcriptor';
   languageService = inject(LanguageService);
 
   constructor() {
